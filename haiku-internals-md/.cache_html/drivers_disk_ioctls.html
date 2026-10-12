@@ -1,0 +1,104 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Disk driver ioctls &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Intel video hardware generations" href="../intel_extreme/generations.html" />
+    <link rel="prev" title="Partitioning system for Sun Sparc machines" href="../../partitioning_systems/sun.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Disk driver ioctls</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../../partitioning_systems/sun.html">Partitioning system for Sun Sparc machines</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../intel_extreme/generations.html">Intel video hardware generations</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="disk-driver-ioctls">
+<h1>Disk driver ioctls<a class="headerlink" href="#disk-driver-ioctls" title="Permalink to this headline">¶</a></h1>
+<p>Here is a list of ioctls usually implemented by disk devices.</p>
+<div class="section" id="b-get-device-size">
+<h2>B_GET_DEVICE_SIZE<a class="headerlink" href="#b-get-device-size" title="Permalink to this headline">¶</a></h2>
+<p>The parameter is a size_t and is filled with the disk size in bytes.
+This is limited to 4GB and not very useful. B_GET_GEOMETRY is used instead.</p>
+</div>
+<div class="section" id="b-get-geometry">
+<h2>B_GET_GEOMETRY<a class="headerlink" href="#b-get-geometry" title="Permalink to this headline">¶</a></h2>
+<p>The parameter is a device_geometry structure to be filled with the device geometry.</p>
+</div>
+<div class="section" id="b-get-icon-name">
+<h2>B_GET_ICON_NAME<a class="headerlink" href="#b-get-icon-name" title="Permalink to this headline">¶</a></h2>
+<p>Deprecated. Get the name of an icon to use. The icons are hardcoded in Tracker.</p>
+</div>
+<div class="section" id="b-get-vector-icon">
+<h2>B_GET_VECTOR_ICON<a class="headerlink" href="#b-get-vector-icon" title="Permalink to this headline">¶</a></h2>
+<p>The parameter is a device_icon structure to be populated with the icon data in HVIF format.
+This icon is then used to show the disk in Tracker, for example.</p>
+</div>
+<div class="section" id="b-eject-device">
+<h2>B_EJECT_DEVICE<a class="headerlink" href="#b-eject-device" title="Permalink to this headline">¶</a></h2>
+<p>Eject the device (for removable devices).</p>
+</div>
+<div class="section" id="b-load-media">
+<h2>B_LOAD_MEDIA<a class="headerlink" href="#b-load-media" title="Permalink to this headline">¶</a></h2>
+<p>Load the device (reverse of eject) if possible.</p>
+</div>
+<div class="section" id="b-flush-drive-cache">
+<h2>B_FLUSH_DRIVE_CACHE<a class="headerlink" href="#b-flush-drive-cache" title="Permalink to this headline">¶</a></h2>
+<p>Make sure all data is stored on persistent storage and not in caches (including any caching inside
+the device)</p>
+</div>
+<div class="section" id="b-trim-device">
+<h2>B_TRIM_DEVICE<a class="headerlink" href="#b-trim-device" title="Permalink to this headline">¶</a></h2>
+<p>The parameter is an fs_trim_data structure. It is guaranteed to be in kernel memory because
+the partition manager pre-processes requests coming from userland and makes sure no sectors
+are outside the partition range for a specific partition device.</p>
+<p>Mark the listed areas on disk as unused, allowing future reads to these areas to return
+random data or read errors. Flash memory devices (SSD, MMC, …) may use this information
+to optimize their internal storage.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../../partitioning_systems/sun.html">Partitioning system for Sun Sparc machines</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../intel_extreme/generations.html">Intel video hardware generations</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

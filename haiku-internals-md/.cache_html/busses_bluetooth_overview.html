@@ -1,0 +1,88 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Bluetooth overview &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="SDHCI MMC Driver" href="../sdhci/sdhci_mmc_driver.html" />
+    <link rel="prev" title="AGP (and PCI-express) Graphics Address Re-Mapping Table" href="../agp_gart/ReadMe.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Bluetooth overview</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../agp_gart/ReadMe.html">AGP (and PCI-express) Graphics Address Re-Mapping Table</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../sdhci/sdhci_mmc_driver.html">SDHCI MMC Driver</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="bluetooth-overview">
+<h1>Bluetooth overview<a class="headerlink" href="#bluetooth-overview" title="Permalink to this headline">¶</a></h1>
+<p>(Copied mostly from
+<a class="reference external" href="http://urnenfeld.blogspot.de/2012/07/in-past-i-got-to-know-that-motivation.html">http://urnenfeld.blogspot.de/2012/07/in-past-i-got-to-know-that-motivation.html</a>)</p>
+<p><strong>L2cap under ``network/protocols/l2cap``</strong>: Provides socket interface
+to have l2cap channels. L2CAP offers connection oriented and
+connectionless sockets. But bluetooth stack as this point has no
+interchangeability with TCP/IP, A Higher level Bluetooth profile must be
+implemented</p>
+<p><strong>HCI under ``src/add-ons/kernel/bluetooth``</strong>: Here we have 2 modules,
+one for handling global bluetooth data structures such as connection
+handles and L2cap channels, and frames</p>
+<p><strong>H2generic under ``src/add-ons/kernel/drivers/bluetooth``</strong>: The USB
+driver, implementing the H2 transport.</p>
+<p><strong>Bluetooth kit under ``src/kit/bluetooth``</strong>: C++ implementation based
+on JSR82 api.</p>
+<p><strong>Bluetooth Server under ``src/servers/bluetooth``</strong>: Basically handling
+opened devices (local connected fisically in our system) and forwaring
+kit calls to them.</p>
+<p><strong>Bluetooth Preferences under ``src/preferences/bluetooth``</strong>:
+Configuration using the kit</p>
+<p><strong>Test applications under ``src/tests/kits/bluetooth``</strong>.</p>
+<p>There is a small prototype component which is not here documented below
+src/add-ons/bluetooth/ResetLocalDevice. Its intention was to be an
+add-on of bluetooth preferences, So that new HCI commands could be
+customized by users or external developers. I did not like at the end
+the idea, I did not find the flexibility I wanted.</p>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../agp_gart/ReadMe.html">AGP (and PCI-express) Graphics Address Re-Mapping Table</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../sdhci/sdhci_mmc_driver.html">SDHCI MMC Driver</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

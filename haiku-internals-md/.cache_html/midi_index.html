@@ -1,0 +1,116 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The MIDI Kit &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Midi Kit design" href="design.html" />
+    <link rel="prev" title="HaikuDepot and Server Interactions" href="../apps/haikudepot/server.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>The MIDI Kit</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../apps/haikudepot/server.html">HaikuDepot and Server Interactions</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="design.html">Midi Kit design</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="the-midi-kit">
+<h1>The MIDI Kit<a class="headerlink" href="#the-midi-kit" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Midi Kit design</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="design.html#ooh-pictures">Ooh, pictures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html#housekeeping">Housekeeping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="design.html#initialization">Initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design.html#error-handling">Error handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design.html#creating-and-deleting-endpoints">Creating and deleting endpoints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design.html#changing-endpoint-attributes">Changing endpoint attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design.html#connections">Connections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design.html#watching">Watching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design.html#thread-safety">Thread safety</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design.html#misc-remarks">Misc remarks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design.html#the-messages">The messages</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="design.html#midi-events">MIDI events</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="midi1.html">How libmidi1 works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="midi1.html#the-softsynth">The softsynth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="oldprotocol.html">The BeOS R5 Midi Kit protocol</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#who-does-what">Who does what?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidiroster-midiroster">BMidiRoster::MidiRoster()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidilocalproducer-constructor">BMidiLocalProducer constructor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidilocalconsumer-constructor">BMidiLocalConsumer constructor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidiendpoint-release">BMidiEndpoint::Release()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidiendpoint-setname">BMidiEndpoint::SetName()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidiendpoint-getproperties">BMidiEndpoint::GetProperties()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidiendpoint-setproperties">BMidiEndpoint::SetProperties()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidilocalconsumer-setlatency">BMidiLocalConsumer::SetLatency()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidiproducer-connect">BMidiProducer::Connect()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#bmidiproducer-disconnect">BMidiProducer::Disconnect()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#watchin">Watchin’</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oldprotocol.html#other-observations">Other observations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="stuff.html">Misc notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing the Midi Kit</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#registering-the-application">Registering the application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#creating-endpoints">Creating endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#deleting-endpoints">Deleting endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#changing-attributes">Changing attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#consulting-the-roster">Consulting the roster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#making-breaking-connections">Making/breaking connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#watching">Watching</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#event-tests">Event tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#other-tests">Other tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">Midi Kit TO DO List</a></li>
+</ul>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../apps/haikudepot/server.html">HaikuDepot and Server Interactions</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="design.html">Midi Kit design</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

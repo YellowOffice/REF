@@ -1,0 +1,116 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Using PCI serial ports for debugging &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Bootloader debugging with GEF" href="boot/Debugging_Bootloaders_GEF.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Using PCI serial ports for debugging</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="boot/Debugging_Bootloaders_GEF.html">Bootloader debugging with GEF</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="using-pci-serial-ports-for-debugging">
+<h1>Using PCI serial ports for debugging<a class="headerlink" href="#using-pci-serial-ports-for-debugging" title="Permalink to this headline">¶</a></h1>
+<p>Modern systems usually don’t come with a built-in serial port anymore. This
+is unconvenient for low level debugging, since the serial port allows access
+to early boot log as well as kernel debugger, even when the display or keyboard
+are not working.</p>
+<p>It is fortunately possible to add a serial port over the PCI bus on machines
+which have appropriate expansion ports. This can be done using expresscard,
+mini-PCI, or PCI express ports.</p>
+<div class="section" id="devices-known-to-work">
+<h2>Devices known to work<a class="headerlink" href="#devices-known-to-work" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Dexlan XMT01A (<a class="reference external" href="https://www.accessoires-informatiques.com/Prix/EXPRESSCARD-PCIE-POUR-PORTABLE-23842.html">https://www.accessoires-informatiques.com/Prix/EXPRESSCARD-PCIE-POUR-PORTABLE-23842.html</a>)</dt>
+<dd>Uses MOSCHIP 9922 controller</dd>
+</dl>
+</div>
+<div class="section" id="devices-to-be-tested">
+<h2>Devices to be tested<a class="headerlink" href="#devices-to-be-tested" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://smile.amazon.com/Industrial-Desktop-Bracket-Moschip-MCS9922/dp/B003D3MFHM/">https://smile.amazon.com/Industrial-Desktop-Bracket-Moschip-MCS9922/dp/B003D3MFHM/</a></p>
+</div>
+<div class="section" id="configuring">
+<h2>Configuring<a class="headerlink" href="#configuring" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Install the card in your computer</li>
+<li>Boot Haiku and look in the syslog for the PCI bus scan for the device:</li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>KERN: PCI: [dom 0, bus  5] bus   5, device  0, function  0: vendor 9710, device 9922, revision 00
+KERN: PCI:   class_base 07, class_function 00, class_api 02
+KERN: PCI:   vendor 9710: MosChip Semiconductor Technology Ltd.
+KERN: PCI:   device 9922: MCS9922 PCIe Multi-I/O Controller
+KERN: PCI:   info: Communication controller (Serial controller, 16550)
+KERN: PCI:   line_size 10, latency 00, header_type 80, BIST 00
+KERN: PCI:   ROM base host 00000000, pci 00000000, size 00000000
+KERN: PCI:   cardbus_CIS 00000000, subsystem_id 1000, subsystem_vendor_id a000
+KERN: PCI:   interrupt_line 0b, interrupt_pin 01, min_grant 00, max_latency 00
+KERN: PCI:   base reg 0: host 00004000, pci 0000KERN: 4000, size 00000008, flags 01
+KERN: PCI:   base reg 1: host f1c01000, pci f1c01000, size 00001000, flags 00
+KERN: PCI:   base reg 2: host 00000000, pci 00000000, size 00000000, flags 00
+KERN: PCI:   base reg 3: host 00000000, pci 00000000, size 00000000, flags 00
+KERN: PCI:   base reg 4: host 00000000, pci 00000000, size 00000000, flags 00
+KERN: PCI:   base reg 5: host f1c00000, pci f1c00000, size 00001000, flags 00
+KERN: PCI:   Capabilities: MSI, PM, PCIe
+KERN: PCI:   Extended capabilities: Virtual Channel, Advanced Error Reporting
+</pre></div>
+</div>
+<p>Write down the address of “base reg 0”, this is where the serial port registers
+are mapped (it is probably possible to get this information from lspci on Linux
+as well?)</p>
+<p>Configure serial debug in config/settings/kernel/drivers/kernel:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>serial_debug_output true
+serial_debug_speed 115200
+serial_debug_port 0x4000
+</pre></div>
+</div>
+<p>Now your kernel is configured to send its output to the serial port. You can
+connect another machine to it (using an USB to serial adapter and a NULL modem
+cable, for example) and use SerialConnect or a similar tool to see the output
+and access the KDL prompt.</p>
+<p>Happy debugging!</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="boot/Debugging_Bootloaders_GEF.html">Bootloader debugging with GEF</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

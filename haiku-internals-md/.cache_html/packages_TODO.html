@@ -1,0 +1,126 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>packagefs &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>packagefs</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <p>These are the TODO items for the Haiku <strong>Package Management</strong>.</p>
+<div class="section" id="packagefs">
+<h1>packagefs<a class="headerlink" href="#packagefs" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>If necessary, add a caching mechanism to speed up mounting it.</li>
+</ul>
+</div>
+<div class="section" id="package-daemon">
+<h1>Package Daemon<a class="headerlink" href="#package-daemon" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Complete support for extracting and updating settings files: Merge support and
+user feedback are still missing.</li>
+<li>Add user notification/interaction support for initial verification
+(on start-up).</li>
+<li>Support packages being copied to the <code class="docutils literal notranslate"><span class="pre">packages</span></code> directory. Currently only
+moving works.</li>
+</ul>
+</div>
+<div class="section" id="package-building">
+<h1>Package building<a class="headerlink" href="#package-building" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Define packaging guidelines and create a tool to check packages against those.<ul>
+<li>Status: Here’s the <a class="reference external" href="PackagingPolicy.rst">wiki page</a> defining the policy. It’s still a work in
+progress. haikuporter has some policy checking built in already.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="package-kit-manager">
+<h1>Package kit/manager<a class="headerlink" href="#package-kit-manager" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Add system update support.<ul>
+<li>Status: Mostly functional in pkgman (<code class="docutils literal notranslate"><span class="pre">pkgman</span> <span class="pre">full-sync</span></code>), but unsupported
+in HaikuDepot.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="boot-loader">
+<h1>Boot loader<a class="headerlink" href="#boot-loader" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Safe mode/recovery options:<ul>
+<li>Disable packages installed in home.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="package-package-repository-format">
+<h1>Package/package repository format<a class="headerlink" href="#package-package-repository-format" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Add localization support. <a class="reference external" href="http://www.freelists.org/post/haiku-depot-web/Title-localization,18">More</a> <a class="reference external" href="http://www.freelists.org/post/haiku-depot-web/Title-localization,29">info</a>.</li>
+<li>Add support for repository keys (public/private) and package
+signing/checksums, so that it is possible to verify that data retrieved from a
+repository have not been tampered with.</li>
+<li>Add package sizes to repository. Since there are plans to support xz (or other
+high-ratio formats) compressed uncompressed packages for download that are
+recompressed for installation, we probably need to discriminate between
+download and installation sizes.</li>
+<li>Add support for a faster compression format (e.g. <a class="reference external" href="https://lz4.github.io/lz4/">lz4</a>). As it turns out,
+the currently used zlib compression is rather slow (slower than reading
+uncompressed data from a slow HD).</li>
+<li>Add MIME info for types supported by packaged applications
+(and sniffer rules?) to the package attributes.</li>
+</ul>
+</div>
+<div class="section" id="miscellaneous">
+<h1>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Add MIME directory watching to registrar, so it can update the MIME DB caches
+when packages are de-/activated.</li>
+<li>Get rid of post_install scripts. Do that in the build system.</li>
+<li>Get rid of UserBootscript. Start the scripts in
+“~/config/settings/boot/launch” from Bootscript instead.</li>
+<li>Update Installer.</li>
+</ul>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

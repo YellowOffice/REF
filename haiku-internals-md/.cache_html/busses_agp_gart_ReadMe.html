@@ -1,0 +1,80 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>AGP (and PCI-express) Graphics Address Re-Mapping Table &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Bluetooth overview" href="../bluetooth/overview.html" />
+    <link rel="prev" title="Intel video hardware generations" href="../../drivers/intel_extreme/generations.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>AGP (and PCI-express) Graphics Address Re-Mapping Table</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../../drivers/intel_extreme/generations.html">Intel video hardware generations</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../bluetooth/overview.html">Bluetooth overview</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="agp-and-pci-express-graphics-address-re-mapping-table">
+<h1>AGP (and PCI-express) Graphics Address Re-Mapping Table<a class="headerlink" href="#agp-and-pci-express-graphics-address-re-mapping-table" title="Permalink to this headline">¶</a></h1>
+<p>The GART is an IO-MMU allowing the videocard and CPU to share some
+memory. Either the CPU can access the video RAM directly (“aperture”),
+or the video card can access the system RAM using DMA access.</p>
+<p>The GART converts between physical addresses and virtual addresses on
+the video card side. Of course, the CPU must then map these physical
+addresses in its own address space to use them (using the MMU).</p>
+<p>The GART works as you’d expect from an MMU. It has a page table (called
+GTT) in RAM and walks it to figure out mappings. Since there cannot be
+page misses (that would require exception handling on the GPU side),
+access to missing pages are instead sent to a dedicated “scratch” page
+which is not used for anything else.</p>
+<p>Our driver implements the GART and GTT for Intel graphics card only, so
+far. Since our videodrivers are only doing modesetting, they do not need
+much support and other drivers implemented GTT management directly on
+their own (it is usually enough to make the framebuffer accessible to
+the CPU). However, this could be generalized into a more flexible iommu
+bus protocol.</p>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../../drivers/intel_extreme/generations.html">Intel video hardware generations</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../bluetooth/overview.html">Bluetooth overview</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

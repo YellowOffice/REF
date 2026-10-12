@@ -1,0 +1,432 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Plug and Play Manager &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Swap file" href="vm/swap_file_support.html" />
+    <link rel="prev" title="Device Driver Architecture" href="device_manager_introduction.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Plug and Play Manager</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="device_manager_introduction.html">Device Driver Architecture</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="vm/swap_file_support.html">Swap file</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="plug-and-play-manager">
+<h1>Plug and Play Manager<a class="headerlink" href="#plug-and-play-manager" title="Permalink to this headline">¶</a></h1>
+<p>This file contains the documentation written by Thomas Kurschel that was originally
+found in the headers of his pnp_manager.
+It’s outdated but could be used as a basis for the real documentation.</p>
+<div class="section" id="pnp-manager">
+<h2>PNP Manager<a class="headerlink" href="#pnp-manager" title="Permalink to this headline">¶</a></h2>
+<p>PnP manager; Takes care of registration and loading of PnP drivers</p>
+<p>Read pnp_driver.h first to understand the basic idea behind PnP drivers.</p>
+<p>To register a driver node, use register_driver. If the device got lost,
+use unregister_driver (note: if the parent node is removed, your node
+get removed automatically as your driver has obviously nothing to work
+with anymore). To get access to a (parent) device, use load_driver/
+unload_driver.</p>
+<p>To let the manager find a consumer (see pnp_driver.h), you can either
+specify its name directly during registration, using a
+PNP_DRIVER_FIXED_CONSUMER attribute, or let the manager search the
+appropriate consumer(s) via a PNP_DRIVER_DYNAMIC_CONSUMER attribute.</p>
+<p>Searching of dynamic consumers is done as follows:</p>
+<ul class="simple">
+<li>First, the manager searches for a Specific driver in the base
+directory (see below)</li>
+<li>If no Specific driver is found, all Generic drivers stored under
+“generic” sub-directory are informed in turn until one returns success</li>
+<li>Finally, _all_ Universal drivers, stored in the “universal” sub-
+directory, are informed</li>
+</ul>
+<p>Specification of the base directory and of the names of Specific
+drivers is done via a file name pattern given by a
+PNP_DRIVER_DYNAMIC_CONSUMER attribute.</p>
+<p>First, all substrings of the form “%attribute_name%” are replaced by the
+content of the attribute “attribute_name” as follows:</p>
+<ul class="simple">
+<li>if the attribute contains an integer value, its content is converted to hex
+(lowercase) with a fixed length according to the attribute’s value range</li>
+<li>the content of string attributes is quoted by ” and invalid characters
+(i.e. /%” and all characters outside 32..126) are replaced by their
+unsigned decimal value, delimited by %</li>
+<li>other attribute types cannot be used</li>
+</ul>
+<p>Second, the resulting name is split into chunks according to the presence
+of | characters (you can escape % and | with a ^ character). These
+characters are only delimiters and get removed before further processing.
+The directory before the first | character is the base directory (see
+above). It contains the “generic” and the “universal” subdirectories.
+The names of the specific drivers are created by first taking the entire
+file name, then by removing the last chunk, then by removing the last
+two chunks and so on until only the first chunk is left.</p>
+<p>As drivers can contain multiple modules, the module name is constructed
+by appending the content of the PNP_DRIVER_TYPE attribute to the driver’s file
+name, seperated by a slash character (note: this only applies to dynamic
+consumers; for fixed consumers, you specify the module name directly via
+PNP_DRIVER_FIXED_CONSUMER).</p>
+<p>E.g. given a dynamic consumer pattern of
+“pci/vendor=%vendor_id%|, device=%device_id%” for a device with the
+attributes vendor_id=0x123 and device_id=0xabcd (both being uint16), the
+PnP manager tries the specific drivers “pci/vendor=0123, device=abcd” and
+(if the first one fails/doesn’t exist) “pci/vendor=0123”. If they both
+refuse to handle the device, all drivers under “pci/generic” are tried
+until one accepts the device. Finally, all drivers under “pci/universal”
+are     loaded, whatever happened before.</p>
+<p>In practise, you should try to use specific drivers as much as possible.
+If detection based on device IDs is impossible (e.g. because the bus
+doesn’t support them at all), you can put the driver under “generic”.
+Generic drivers can also be used to specify wrappers that try to load old-
+style drivers if no new driver can be found. Also, they can be used to
+report an error or invoke an user program that tries downloading a
+proper Specific driver. Universal drivers are mainly used for
+informational purposes, e.g. to publish data about each found device,
+or to provide raw access to all devices.</p>
+<p>If the device uses physical address space or I/O space or ISA DMA
+channels (called I/O resources), the driver has to acquire these
+resources. During hardware detection (usually via probe()),
+acquire_io_resources() must be called to get exclusive access.
+If no hardware could be found, they must be released via
+release_io_resources(). If detection was successful, the list of
+the (acquired) resources must be passed to register_device().
+Resources can either belong to one hardware detection or to a device.
+If a hardware detection collides with another, it has to wait;
+if it collides with a device whose driver is not loaded, the
+driver loading is blocked. When detection fails, i.e. if
+release_io_resources() is called, all blocked drivers can be loaded
+again. If the detection fails, i.e. the resources are transferred
+via register_device(), all blocked devices are unregistered and
+pending load requests aborted. If a hardware detection collides
+with a device whose driver is loaded, acquire_io_resources() fails
+with B_BUSY. As this makes a hardware rescan impossible if the
+driver is loaded, you should define     PNP_DRIVER_NO_LIVE_RESCAN
+for nodes that use I/O resources (see below).</p>
+<p>To search for new drivers for a given device node, use rescan(). This
+marks all consumer devices as being verified and calls probe()
+of all consumers drivers (see above) to let them rescan the parent
+for devices. The &lt;depth&gt; parameter determines the nesting level, e.g.
+2 means that first the consumers are scanned and then the consumers
+of the consumers.</p>
+<p>Normally, all devices can be rescanned. If a driver cannot handle
+a rescan safely when it is loaded (i.e. used by a consumer), it
+must set PNP_DRIVER_NO_LIVE_RESCAN, in which case the device is
+ignored during rescan if the driver is loaded and attempts
+to load the driver during a rescan are blocked until the rescan
+is finished. If rescanning a device is not possible at all, it must
+have set PNP_DRIVER_NEVER_RESCAN to always ignore it.</p>
+<p>To distinguish between new devices, lost devices and redetected
+devices, consumer devices should provide a connection code and a
+device identifier. They are specified by PNP_DRIVER_CONNECTION and
+PNP_DRIVER_CONNECTION respectively, and are expanded in the same way
+as PNP_DRIVER_DYNAMIC_CONSUMER. It is assumed that there can be only
+one device per connection and that a device can be uniquely identify
+by a device identifier. If a consumer device is registered on the
+same connection as an existing device but with a different device
+identifier, the old device gets unregistered automatically. If both
+connection and device identifier are the same, registration is
+handled as a redetection and ignored (unless a different type or
+driver module is specified - in this case, the device is replaced).
+Devices that were not redetected during a rescan get unregistered
+unless they were ignored (see above).</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// interface of PnP manager</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">device_manager_info</span> <span class="p">{</span>
+    <span class="n">module_info</span> <span class="n">info</span><span class="p">;</span>
+
+    <span class="c1">// load driver</span>
+    <span class="c1">// node - node whos driver is to be loaded</span>
+    <span class="c1">// user_cookie - cookie to be passed to init_device of driver</span>
+    <span class="c1">// interface - interface of loaded driver</span>
+    <span class="c1">// cookie - device cookie issued by loaded driver</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">init_driver</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">userCookie</span><span class="p">,</span>
+                                    <span class="n">driver_module_info</span> <span class="o">**</span><span class="n">interface</span><span class="p">,</span> <span class="kt">void</span> <span class="o">**</span><span class="n">cookie</span><span class="p">);</span>
+    <span class="c1">// unload driver</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">uninit_driver</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">);</span>
+
+    <span class="c1">// rescan node for new dynamic drivers</span>
+    <span class="c1">// node - node whose dynamic drivers are to be scanned</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">rescan</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">);</span>
+
+    <span class="c1">// register device</span>
+    <span class="c1">// parent - parent node</span>
+    <span class="c1">// attributes - NULL-terminated array of node attributes</span>
+    <span class="c1">// io_resources - NULL-terminated array of I/O resources (can be NULL)</span>
+    <span class="c1">// node - new node handle</span>
+    <span class="c1">// on return, io_resources are invalid: on success I/O resources belong</span>
+    <span class="c1">// to node, on fail they are released;</span>
+    <span class="c1">// if device is already registered, B_OK is returned but *node is NULL</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">register_device</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">parent</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="n">device_attr</span> <span class="o">*</span><span class="n">attrs</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="n">io_resource_handle</span> <span class="o">*</span><span class="n">io_resources</span><span class="p">,</span>
+                                    <span class="n">device_node_handle</span> <span class="o">*</span><span class="n">node</span><span class="p">);</span>
+    <span class="c1">// unregister device</span>
+    <span class="c1">// all nodes having this node as their parent are unregistered too.</span>
+    <span class="c1">// if the node contains PNP_MANAGER_ID_GENERATOR/PNP_MANAGER_AUTO_ID</span>
+    <span class="c1">// pairs, the id specified this way is freed too</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">unregister_device</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">);</span>
+
+    <span class="c1">// find device by node content</span>
+    <span class="c1">// the given attributes must _uniquely_ identify a device node;</span>
+    <span class="c1">// parent - parent node (-1 for don&#39;t-care)</span>
+    <span class="c1">// attrs - list of attributes (can be NULL)</span>
+    <span class="c1">// The node you got will be automatically put on the next call</span>
+    <span class="c1">// to this function.</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">get_next_child_device</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">parent</span><span class="p">,</span>
+            <span class="n">device_node_handle</span> <span class="o">*</span><span class="n">_node</span><span class="p">,</span> <span class="k">const</span> <span class="n">device_attr</span> <span class="o">*</span><span class="n">attrs</span><span class="p">);</span>
+
+    <span class="c1">// get parent device node</span>
+    <span class="n">device_node_handle</span> <span class="p">(</span><span class="o">*</span><span class="n">get_parent</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">);</span>
+
+    <span class="c1">// Must be called after get_next_child_device() (if you don&#39;t iterate through)</span>
+    <span class="c1">// and get_parent() to make sure the node is freed when it&#39;s not used anymore</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">put_device_node</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">);</span>
+
+    <span class="c1">// acquire I/O resources</span>
+    <span class="c1">// resources - NULL-terminated array of resources to acquire</span>
+    <span class="c1">// handles - NULL-terminated array of handles (one per resource);</span>
+    <span class="c1">//           array must be provided by caller</span>
+    <span class="c1">// return B_BUSY if a resource is used by a loaded driver</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">acquire_io_resources</span><span class="p">)(</span><span class="n">io_resource</span> <span class="o">*</span><span class="n">resources</span><span class="p">,</span>
+                                    <span class="n">io_resource_handle</span> <span class="o">*</span><span class="n">handles</span><span class="p">);</span>
+    <span class="c1">// release I/O resources</span>
+    <span class="c1">// handles - NULL-terminated array of handles</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">release_io_resources</span><span class="p">)(</span><span class="k">const</span> <span class="n">io_resource_handle</span> <span class="o">*</span><span class="n">handles</span><span class="p">);</span>
+
+    <span class="c1">// create unique id</span>
+    <span class="c1">// generator - name of id set</span>
+    <span class="c1">// if result &gt;= 0 - unique id</span>
+    <span class="c1">//    result &lt; 0 - error code</span>
+    <span class="n">int32</span> <span class="p">(</span><span class="o">*</span><span class="n">create_id</span><span class="p">)(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">generator</span><span class="p">);</span>
+    <span class="c1">// free unique id</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">free_id</span><span class="p">)(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">generator</span><span class="p">,</span> <span class="n">uint32</span> <span class="n">id</span><span class="p">);</span>
+
+    <span class="c1">// helpers to extract attribute by name.</span>
+    <span class="c1">// if &lt;recursive&gt; is true, parent nodes are scanned if</span>
+    <span class="c1">// attribute isn&#39;t found in current node; unless you declared</span>
+    <span class="c1">// the attribute yourself, use recursive search to handle</span>
+    <span class="c1">// intermittent nodes, e.g. defined by filter drivers, transparently.</span>
+    <span class="c1">// for raw and string attributes, you get a copy that must</span>
+    <span class="c1">// be freed by caller</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">get_attr_uint8</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="n">uint8</span> <span class="o">*</span><span class="n">value</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">recursive</span><span class="p">);</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">get_attr_uint16</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="n">uint16</span> <span class="o">*</span><span class="n">value</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">recursive</span><span class="p">);</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">get_attr_uint32</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="n">uint32</span> <span class="o">*</span><span class="n">value</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">recursive</span><span class="p">);</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">get_attr_uint64</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="n">uint64</span> <span class="o">*</span><span class="n">value</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">recursive</span><span class="p">);</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">get_attr_string</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">value</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">recursive</span><span class="p">);</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">get_attr_raw</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="kt">void</span> <span class="o">**</span><span class="n">data</span><span class="p">,</span> <span class="kt">size_t</span> <span class="o">*</span><span class="n">_size</span><span class="p">,</span>
+                                    <span class="kt">bool</span> <span class="n">recursive</span><span class="p">);</span>
+
+    <span class="c1">// get next attribute of node;</span>
+    <span class="c1">// on call, *&lt;attr_handle&gt; must contain handle of an attribute;</span>
+    <span class="c1">// on return, *&lt;attr_handle&gt; is replaced by the next attribute or</span>
+    <span class="c1">// NULL if it was the last;</span>
+    <span class="c1">// to get the first attribute, &lt;attr_handle&gt; must point to NULL;</span>
+    <span class="c1">// the returned handle must be released by either passing it to</span>
+    <span class="c1">// another get_next_attr() call or by using release_attr()</span>
+    <span class="c1">// directly</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">get_next_attr</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span>
+                                    <span class="n">device_attr_handle</span> <span class="o">*</span><span class="n">attrHandle</span><span class="p">);</span>
+
+    <span class="c1">// release attribute handle &lt;attr_handle&gt; of &lt;node&gt;;</span>
+    <span class="c1">// see get_next_attr</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">release_attr</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span>
+                                    <span class="n">device_attr_handle</span> <span class="n">attr_handle</span><span class="p">);</span>
+
+    <span class="c1">// retrieve attribute data with handle given;</span>
+    <span class="c1">// &lt;attr&gt; is only valid as long as you don&#39;t release &lt;attr_handle&gt;</span>
+    <span class="c1">// implicitely or explicitely</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">retrieve_attr</span><span class="p">)(</span><span class="n">device_attr_handle</span> <span class="n">attr_handle</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="n">device_attr</span> <span class="o">**</span><span class="n">attr</span><span class="p">);</span>
+
+    <span class="c1">// change/add attribute &lt;attr&gt; of/to node</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">write_attr</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span>
+                                    <span class="k">const</span> <span class="n">device_attr</span> <span class="o">*</span><span class="n">attr</span><span class="p">);</span>
+
+    <span class="c1">// remove attribute of node by name</span>
+    <span class="c1">// &lt;name&gt; is name of attribute</span>
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">remove_attr</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">);</span>
+<span class="p">}</span> <span class="n">device_manager_info</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pnp-driver">
+<h2>PNP Driver<a class="headerlink" href="#pnp-driver" title="Permalink to this headline">¶</a></h2>
+<p>Required interface of PnP drivers</p>
+<p>In contrast to standard BeOS drivers, PnP drivers are normal modules
+having the interface described below.</p>
+<p>Every device is described by its driver via a PnP node with properties
+described in PnP Node Attributes. Devices are organized in a hierarchy,
+e.g. a devfs device is a hard disk device that is connected to a
+controller, which is a PCI device, that is connected to a PCI bus.
+Every device is connected to its lower-level device     via a parent link
+stored in its Node. The higher-level is called the consumer of the
+lower-level device. If the lower-level device gets removed, all its
+consumers are removed too.</p>
+<p>In our example, the hierarchy is</p>
+<blockquote>
+<div>devfs device -&gt; hard disk -&gt; controller -&gt; PCI device -&gt; PCI bus</div></blockquote>
+<p>If the PCI bus is removed, everything up to including the devfs device
+is removed too.</p>
+<p>The driver hierarchy is constructed bottom-up, i.e. the lower-level
+driver searches for a corresponding consumer, which in turns searches
+for its consumer and so on. The lowest driver is usually something like
+a PCI bus, the highest driver is normally a devfs entry (see pnp_devfs.h).
+Registration of devices and the search for appropriate consumers is
+done via the pnp_manager (see pnp_manager.h).</p>
+<p>When a potential consumer is found, it gets informed about the new
+lower-level device and can either refuse its handling or accept it.
+On accept, it has to create a new node with the lower-level device
+node as its parent.</p>
+<p>Loading of drivers is done on demand, i.e. if the consumer wants to
+access its lower-level device, it explicitely loads the corresponding
+driver, and once it doesn’t need it anymore, the lower-level driver
+must be unloaded. Usually, this process happens recursively, i.e. in
+our example, the hard disk driver loads the controller driver, which
+loads the PCI device driver which loads the PCI bus driver. The same
+process applies to unloading.</p>
+<p>Because of this dynamic loading, drivers must store persistent data
+in the node of their devices. Please be aware that you cannot modify
+a node once published.</p>
+<p>If a device gets removed, you must unregister its node. As said, the
+PnP manager will automatically unregister all consumers too. The
+corresponding drivers are notified to stop talking to their     lower-level
+devices and to terminate running requests. Normally, you want to use a
+dedicated variable that is verified at each call to make sure that the
+parent is still there. The notification is done independantly of the
+driver being loaded by its consumer(s) or not. If it isn’t loaded,
+the notification callback gets NULL as the device cookie; normally, the
+driver returns immediately in this case. As soon as both the device
+is removed and the driver is unloaded, device_cleanup gets called to
+free resources that couldn’t be safely removed in device_removed when
+the driver was still loaded.</p>
+<p>If a device has exactly one consumer, they often interact in some way.
+To simplify that, the consumer can pass a user-cookie to its parent
+during load. In this case, it’s up to the parent driver to get a
+pointer to the interface of the consumer. Effectively, such consumers
+have one interface for their consumers (base on pnp_driver_info), and
+a another for their parents (with a completely driver-specific
+structure).</p>
+<p>In terms of synchronization, loading/unloading/remove-notifications
+are executed synchronously, i.e. if e.g. a device is to be unloaded
+but     the drive currently handles a remove-notification, the unloading
+is delayed until the nofication callback returns. If multiple consumers
+load a driver, the driver gets initialized only once; subsequent load
+requests increase an internal load count only and return immediately.
+In turn, unloading only happens once the load count reaches zero.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">driver_module_info</span> <span class="p">{</span>
+    <span class="n">module_info</span> <span class="n">info</span><span class="p">;</span>
+
+    <span class="kt">float</span> <span class="p">(</span><span class="o">*</span><span class="n">supports_device</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">parent</span><span class="p">,</span> <span class="kt">bool</span> <span class="o">*</span><span class="n">_noConnection</span><span class="p">);</span>
+            <span class="c1">// check whether this parent is supported</span>
+
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">register_device</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">parent</span><span class="p">);</span>
+            <span class="c1">// Register your device node.</span>
+
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">init_driver</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">user_cookie</span><span class="p">,</span> <span class="kt">void</span> <span class="o">**</span><span class="n">_cookie</span><span class="p">);</span>
+            <span class="c1">// driver is loaded.</span>
+            <span class="c1">// node - node of device</span>
+            <span class="c1">// user_cookie - cookie passed by loading driver</span>
+            <span class="c1">// cookie - cookie issued by this driver</span>
+
+    <span class="n">status_t</span> <span class="p">(</span><span class="o">*</span><span class="n">uninit_driver</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">cookie</span><span class="p">);</span>
+            <span class="c1">// driver gets unloaded.</span>
+
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">device_removed</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">cookie</span><span class="p">);</span>
+            <span class="c1">// a device node, registered by this driver, got removed.</span>
+            <span class="c1">// if the driver wasn&#39;t loaded when this happenes, no (un)init_device</span>
+            <span class="c1">// is called and thus &lt;cookie&gt; is NULL;</span>
+
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">device_cleanup</span><span class="p">)(</span><span class="n">device_node_handle</span> <span class="n">node</span><span class="p">);</span>
+            <span class="c1">// a device node, registered by this driver, got removed and</span>
+            <span class="c1">// the driver got unloaded</span>
+
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">get_supported_paths</span><span class="p">)(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">***</span><span class="n">_busses</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">***</span><span class="n">_devices</span><span class="p">);</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pnp-bus">
+<h2>PNP Bus<a class="headerlink" href="#pnp-bus" title="Permalink to this headline">¶</a></h2>
+<p>Required interface of PnP bus drivers</p>
+<p>Busses consist of two node layers: the lower layer defines the bus,
+the upper layer defines the abstract devices connected to the bus.
+Both layers are handled by a bus manager. Actual device nodes are
+on top of abstract device nodes.</p>
+<p>E.g. if we have a PCI bus with an IDE controller on it, we get</p>
+<p>IDE controller -&gt; PCI device -&gt; PCI bus</p>
+<p>with:</p>
+<ul class="simple">
+<li>IDE controller = actual device node</li>
+<li>PCI device = abstract device node</li>
+<li>PCI bus = bus node</li>
+</ul>
+<p>The PCI bus manager establishes both the PCI devices and the PCI busses.</p>
+<p>Abstract device nodes act as a gateway between actual device nodes
+and the corresponding bus node. They are constructed by the bus
+node driver via its rescan() hook. To identify a bus node, define
+PNP_BUS_IS_BUS as an attribute of it. As a result, the PnP manager
+will call the rescan() method of the bus driver whenever the
+bus is to be rescanned. Afterwards, all possible dynamic consumers
+are informed as done for normal nodes.</p>
+<p>Normally, potential device drivers are notified immediately when
+rescan() registers a new abstract device node. But sometimes, device
+drivers need to know _all_ devices connected to the bus for correct
+detection. To ensure this, the bus node must define
+PNP_BUS_NOTIFY_CONSUMERS_AFTER_RESCAN. In this case, scanning for
+consumers is postponed until rescan() has finished.</p>
+<p>If hot-plugging of devices can be detected automatically (e.g. USB),
+you should define PNP_DRIVER_ALWAYS_LOADED, so the bus driver is
+always loaded and thus capable of handling hot-plug events generated
+by the bus controller hardware.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="device_manager_introduction.html">Device Driver Architecture</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="vm/swap_file_support.html">Swap file</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

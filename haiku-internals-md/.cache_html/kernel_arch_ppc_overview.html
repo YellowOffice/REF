@@ -1,0 +1,110 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The PowerPC port &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Notes on a possible BeBox Haiku port" href="bebox.html" />
+    <link rel="prev" title="The Atari ST port" href="../m68k/atari.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>The PowerPC port</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../m68k/atari.html">The Atari ST port</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="bebox.html">Notes on a possible BeBox Haiku port</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="the-powerpc-port">
+<h1>The PowerPC port<a class="headerlink" href="#the-powerpc-port" title="Permalink to this headline">¶</a></h1>
+<p>PowerPC was the first non-x86architecture for which a port of Haiku was attempted. The initial
+target was the (then recently released) Mac Mini, but of course the BeBox was in everyone’s mind
+as a possible target for this port.</p>
+<p>This port went as far as starting the kernel, but then difficulties in implementing the Mac Mini
+PCI bus driver stopped it.</p>
+<p>Later on, some work as done on adding support for the Sam460ex development board, after a donation
+of one to one of the Haiku developers.</p>
+<p>Recently, the lack of easily available and affordable PowerPC hardware has reduced interest in this
+port.</p>
+<div class="section" id="platform-specific-details">
+<h2>Platform specific details<a class="headerlink" href="#platform-specific-details" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bebox.html">Notes on a possible BeBox Haiku port</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bebox.html#bootloader">Bootloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bebox.html#references">references</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bebox.html#qemu-target">QEMU target</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mac.html">The Apple Macintosh port</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sam460ex.html">The Sam460ex Haiku port</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sam460ex.html#u-boot-commands">U-Boot commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#no-fdt-no-initrd">no-fdt no-initrd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#with-fdt-and-tgz-as-initrd">with FDT and tgz as initrd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#for-environment">for environment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sam460ex.html#todos">TODOs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sam460ex.html#other-ports">Other ports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sam460ex.html#powerpc-information">PowerPC information</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#classic">Classic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#book-e">Book-E</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#epapr">ePAPR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#amcc-4x0">amcc 4x0</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#freescale-440">Freescale 440</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sam460ex.html#fdt">FDT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#sam440-dts">Sam440 dts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sam460ex.html#openfirmware-framebuffer">OpenFirmware framebuffer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../m68k/atari.html">The Atari ST port</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="bebox.html">Notes on a possible BeBox Haiku port</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

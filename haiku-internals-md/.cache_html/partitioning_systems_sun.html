@@ -1,0 +1,226 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Partitioning system for Sun Sparc machines &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Disk driver ioctls" href="../drivers/disk/ioctls.html" />
+    <link rel="prev" title="The Be File System" href="../file_systems/befs/resources.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Partitioning system for Sun Sparc machines</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../file_systems/befs/resources.html">The Be File System</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../drivers/disk/ioctls.html">Disk driver ioctls</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="partitioning-system-for-sun-sparc-machines">
+<h1>Partitioning system for Sun Sparc machines<a class="headerlink" href="#partitioning-system-for-sun-sparc-machines" title="Permalink to this headline">¶</a></h1>
+<p>Infos extracted from <a class="reference external" href="urn:isbn:0-134-43954-6">File System Forensic Analysis, Brian Carrier</a>
+and in particular the <a class="reference external" href="https://books.google.fr/books?id=Zpm9CgAAQBAJ&amp;lpg=PT159&amp;ots=6LIQ6blJCF&amp;dq=solaris%20vtoc%20structure&amp;hl=fr&amp;pg=PT159#v=onepage&amp;q=solaris%20vtoc%20structure&amp;f=false">online copy here</a>), tables 6.9 and 6.10.</p>
+<p>The format is called VTOC (volume table of contents). It is stored at offset 0
+on-disk. All values are big endian.</p>
+<p>Note that the x86 version of Solaris uses a different layout.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="27%" />
+<col width="73%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Byte offset</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>0-127</td>
+<td>ASCII disk label</td>
+</tr>
+<tr class="row-odd"><td>128-261</td>
+<td>VTOC *</td>
+</tr>
+<tr class="row-even"><td>262-263</td>
+<td>Sectors to skip when writing</td>
+</tr>
+<tr class="row-odd"><td>264-265</td>
+<td>Setors to skip when reading</td>
+</tr>
+<tr class="row-even"><td>266-419</td>
+<td>Reserved</td>
+</tr>
+<tr class="row-odd"><td>420-421</td>
+<td>Disk speed</td>
+</tr>
+<tr class="row-even"><td>422-423</td>
+<td>Number of cylinders</td>
+</tr>
+<tr class="row-odd"><td>424-425</td>
+<td>Alternates per cylinder</td>
+</tr>
+<tr class="row-even"><td>426-429</td>
+<td>Reserved</td>
+</tr>
+<tr class="row-odd"><td>430-431</td>
+<td>Interleave</td>
+</tr>
+<tr class="row-even"><td>432-433</td>
+<td>Number of data cylinders</td>
+</tr>
+<tr class="row-odd"><td>434-435</td>
+<td>Number of alternate cylinders</td>
+</tr>
+<tr class="row-even"><td>436-437</td>
+<td>Number of heads</td>
+</tr>
+<tr class="row-odd"><td>438-439</td>
+<td>Number of sectors per track</td>
+</tr>
+<tr class="row-even"><td>440-443</td>
+<td>Reserved</td>
+</tr>
+<tr class="row-odd"><td>444-451</td>
+<td>Partition 1 disk map</td>
+</tr>
+<tr class="row-even"><td>…</td>
+<td>More partition disk maps</td>
+</tr>
+<tr class="row-odd"><td>500-507</td>
+<td>Partition 8 disk map</td>
+</tr>
+<tr class="row-even"><td>508-509</td>
+<td>Signature (0xDABE)</td>
+</tr>
+<tr class="row-odd"><td>510-511</td>
+<td>Checksum</td>
+</tr>
+</tbody>
+</table>
+<p>The VTOC itself:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>0-3</td>
+<td>Version</td>
+</tr>
+<tr class="row-even"><td>4-11</td>
+<td>Volume name</td>
+</tr>
+<tr class="row-odd"><td>12-13</td>
+<td>Number of partitions</td>
+</tr>
+<tr class="row-even"><td>14-15</td>
+<td>Partition 1 type</td>
+</tr>
+<tr class="row-odd"><td>16-17</td>
+<td>Partition 1 flags</td>
+</tr>
+<tr class="row-even"><td>…</td>
+<td>More partition types and flags</td>
+</tr>
+<tr class="row-odd"><td>42-45</td>
+<td>Partition 8 type and flags</td>
+</tr>
+<tr class="row-even"><td>46-57</td>
+<td>Boot info</td>
+</tr>
+<tr class="row-odd"><td>58-59</td>
+<td>Reserved</td>
+</tr>
+<tr class="row-even"><td>60-63</td>
+<td>Signature 0x600DDEEE</td>
+</tr>
+<tr class="row-odd"><td>64-101</td>
+<td>Reserved</td>
+</tr>
+<tr class="row-even"><td>102-105</td>
+<td>Partition 1 timestamp</td>
+</tr>
+<tr class="row-odd"><td>…</td>
+<td>More partition timestamps</td>
+</tr>
+<tr class="row-even"><td>130-133</td>
+<td>Parittion 8 timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Partition types (informative):</p>
+<ol class="arabic simple" start="0">
+<li>unassigned</li>
+<li>/boot</li>
+<li>/</li>
+<li>swap</li>
+<li>/usr</li>
+<li>entire disk</li>
+<li>/stand</li>
+<li>/var</li>
+<li>/home</li>
+<li>alternate sector</li>
+<li>cachefs</li>
+</ol>
+<p>Partition flags:</p>
+<ul class="simple">
+<li>1 - Not mountable</li>
+<li>128 - read only</li>
+</ul>
+<p>Disk maps:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="79%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>0-3</td>
+<td>Starting cylinder</td>
+</tr>
+<tr class="row-even"><td>4-7</td>
+<td>Size (in sectors)</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../file_systems/befs/resources.html">The Be File System</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../drivers/disk/ioctls.html">Disk driver ioctls</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

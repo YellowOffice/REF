@@ -1,0 +1,279 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to Haiku internals’s documentation! &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The configure script" href="build/configure.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="#">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Welcome to Haiku internals’s documentation!</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="#">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="build/configure.html">The configure script</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="welcome-to-haiku-internals-s-documentation">
+<h1>Welcome to Haiku internals’s documentation!<a class="headerlink" href="#welcome-to-haiku-internals-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="target-audience">
+<h2>Target audience<a class="headerlink" href="#target-audience" title="Permalink to this headline">¶</a></h2>
+<p>This documentation is aimed at people who want to contribute to Haiku by modifying the operating
+system itself. It covers various topics, both technical (how things work) and organizational
+(patch submission process, for example).</p>
+<p>This document might also be useful to application developers trying to understand the behavior of
+the operating system in some specific cases, however, the <a class="reference external" href="https://api.haiku-os.org">API documentation</a> should answer most of
+the questions in this area already.</p>
+<p>This documentation assumes basic knowledge of C++ and the Be API, if you need more information
+about that, please see the <a class="reference external" href="https://github.com/theclue/programming-with-haiku/releases/tag/v1.1">Learning to program with Haiku</a> book.</p>
+</div>
+<div class="section" id="status-of-this-document">
+<h2>Status of this document<a class="headerlink" href="#status-of-this-document" title="Permalink to this headline">¶</a></h2>
+<p>The work on this book has just started, many sections are incomplete or missing. Here is a list of
+other resources that could be useful:</p>
+<ul class="simple">
+<li>The <a class="reference external" href="https://www.haiku-os.org">Haiku website</a> has several years of blog posts and articles
+documenting many aspects of the system,</li>
+<li>The <a class="reference external" href="https://www.haiku-os.org/development/coding-guidelines/">Coding guidelines</a> describes how code should be formatted,</li>
+<li>The <a class="reference external" href="https://www.haiku-os.org/docs/userguide/en/contents.html">User guide</a> documents Haiku from the users’ point of view and can be useful to understand how things are supposed to work,</li>
+<li>The <a class="reference external" href="https://www.haiku-os.org/docs/HIG/index.xml">Haiku Interface Guidelines</a> document graphical user interface conventions,</li>
+<li>The <a class="reference external" href="https://www.haiku-os.org/development/icon-guidelines">Haiku Icon Guidelines</a> gives some rules for making icons fitting with the style of the existing ones.</li>
+</ul>
+</div>
+<div class="section" id="table-of-contents">
+<h2>Table of contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="build/configure.html">The configure script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build/jam.html">Building Haiku with Jam</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build/repositories/README.html">HaikuPorts build-packages repository</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="build/repositories/README.html#updating">Updating</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build/repositories/README.html#container-process">Container Process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build/repositories/README.html#prepare-the-build-packages-repository">Prepare the build-packages repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build/repositories/README.html#pull-the-repostory-file-and-commit-it">Pull the repostory file and commit it</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps/haikudepot/server.html">HaikuDepot and Server Interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps/haikudepot/server.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps/haikudepot/server.html#process-processnode-and-coordinator">Process, ProcessNode and Coordinator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps/haikudepot/server.html#bulk-load-processes">Bulk Load Processes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps/haikudepot/server.html#process-processnode-coordinator">Process / ProcessNode / Coordinator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps/haikudepot/server.html#failure">Failure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps/haikudepot/server.html#concurrency">Concurrency</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="midi/index.html">The MIDI Kit</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="midi/design.html">Midi Kit design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="midi/midi1.html">How libmidi1 works</a></li>
+<li class="toctree-l2"><a class="reference internal" href="midi/midi1.html#the-softsynth">The softsynth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="midi/oldprotocol.html">The BeOS R5 Midi Kit protocol</a></li>
+<li class="toctree-l2"><a class="reference internal" href="midi/stuff.html">Misc notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="midi/testing.html">Testing the Midi Kit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="midi/todo.html">Midi Kit TO DO List</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="net/NetworkStackOverview.html">Haiku Network Stack Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="net/NetworkStackOverview.html#the-structures-and-classes">The Structures and Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="net/HowTo-Synchronize_with_NetBSD.html">How to Merge Patches from NetBSD Trunk</a></li>
+<li class="toctree-l1"><a class="reference internal" href="packages/README.html">Package Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="packages/BuildingPackages.html">Building Packages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/DirectoryStructure.html">Boot Volume Directory Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/FileFormat.html">Haiku Package File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/HybridBuilds.html">Hybrid Builds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/Infrastructure.html">Package Management Infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/Migration.html">Migration to Package Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/PackagingPolicy.html">Packaging Policy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/Bootstrapping.html">Bootstrapping Haiku</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/TODO.html">packagefs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/TODO.html#package-daemon">Package Daemon</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/TODO.html#package-building">Package building</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/TODO.html#package-kit-manager">Package kit/manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/TODO.html#boot-loader">Boot loader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/TODO.html#package-package-repository-format">Package/package repository format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/TODO.html#miscellaneous">Miscellaneous</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/OldIdeas.html">Package Management Ideas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="servers/app_server/toc.html">Application Server</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="servers/app_server/toc.html#class-descriptions">Class Descriptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="servers/app_server/toc.html#other-documents">Other Documents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="servers/registrar/Protocols.html">Registrar Protocols</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="servers/registrar/Protocols.html#standard-replies">Standard Replies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="servers/registrar/Protocols.html#general-requests">General Requests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="servers/registrar/Protocols.html#roster-requests">Roster Requests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="servers/registrar/Protocols.html#mime-database-requests">MIME Database Requests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="servers/registrar/Protocols.html#message-runner-requests">Message Runner Requests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="servers/registrar/Protocols.html#clipboard-handler-requests">Clipboard Handler Requests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="servers/registrar/Protocols.html#disk-device-requests">Disk Device Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/device_manager_introduction.html">Device Driver Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/device_manager_introduction.html#the-basics">1. The Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/device_manager_introduction.html#exploring-the-device-tree">2. Exploring the Device Tree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/device_manager_introduction.html#writing-a-driver">3. Writing a Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/device_manager_introduction.html#publishing-a-device">4. Publishing a Device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/device_manager_introduction.html#writing-a-bus-driver">5. Writing a Bus Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/device_manager_introduction.html#the-generic-bus">The generic bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/device_manager_introduction.html#open-issues">6. Open Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/obsolete_pnp_manager.html">Plug and Play Manager</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/obsolete_pnp_manager.html#pnp-manager">PNP Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/obsolete_pnp_manager.html#pnp-driver">PNP Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/obsolete_pnp_manager.html#pnp-bus">PNP Bus</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/vm/swap_file_support.html">Swap file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/vm/swap_file_support.html#how-to-use-a-swap-file">How to use a swap file?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/vm/swap_file_support.html#how-swap-system-works">How swap system works?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/arch/long_double.html">Notes on long double support</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/long_double.html#bit-ieee">128-bit IEEE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/long_double.html#bit-ieee-1">64-bit IEEE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/long_double.html#bit">80-bit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/long_double.html#double-double">double double</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/arch/arm/overview.html">The ARM port</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/arm/overview.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/arm/overview.html#information-about-specific-hardware-targets">Information about specific hardware targets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/arm/overview.html#todo-list">TODO list</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/arm/overview.html#other-resources">Other resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/arch/m68k/overview.html">The m68k port</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/m68k/overview.html#todo-list">Todo list</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/m68k/overview.html#target-platforms-information">Target platforms information</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/arch/ppc/overview.html">The PowerPC port</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/ppc/overview.html#platform-specific-details">Platform specific details</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/arch/sparc/overview.html">The SPARC port</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/sparc/overview.html#sparc-abi">SPARC ABI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/sparc/overview.html#misaligned-memory-access">Misaligned memory access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/sparc/overview.html#the-ultrasparc-mmus">The Ultrasparc MMUs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/sparc/overview.html#software-floating-point-support">Software floating-point support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/arch/sparc/overview.html#openboot-bootloader">Openboot bootloader</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/fs/node_monitoring.html">Node Monitoring</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/fs/node_monitoring.html#requirements-exported-functionality-in-beos">Requirements - Exported Functionality in BeOS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/fs/node_monitoring.html#meeting-the-requirements-in-an-optimal-way-implementation-in-openbeos">Meeting the Requirements in an Optimal Way - Implementation in OpenBeOS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/fs/node_monitoring.html#differences-between-both-implementations">Differences Between Both Implementations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/fs/node_monitoring.html#and-beyond">And Beyond?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="file_systems/overview.html">Filesystem drivers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="file_systems/overview.html#implementation-notes">Implementation notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_systems/overview.html#development-tools">Development tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="partitioning_systems/sun.html">Partitioning system for Sun Sparc machines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="drivers/disk/ioctls.html">Disk driver ioctls</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="drivers/disk/ioctls.html#b-get-device-size">B_GET_DEVICE_SIZE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/disk/ioctls.html#b-get-geometry">B_GET_GEOMETRY</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/disk/ioctls.html#b-get-icon-name">B_GET_ICON_NAME</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/disk/ioctls.html#b-get-vector-icon">B_GET_VECTOR_ICON</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/disk/ioctls.html#b-eject-device">B_EJECT_DEVICE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/disk/ioctls.html#b-load-media">B_LOAD_MEDIA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/disk/ioctls.html#b-flush-drive-cache">B_FLUSH_DRIVE_CACHE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/disk/ioctls.html#b-trim-device">B_TRIM_DEVICE</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="drivers/intel_extreme/generations.html">Intel video hardware generations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-1">Generation 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-2-2002">Generation 2 / 2002</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-3-2004">Generation 3 / 2004</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-4-2006">Generation 4 / 2006</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-5-2010">Generation 5 / 2010</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-6-2011">Generation 6 / 2011</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-7-2012">Generation 7 / 2012</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-8-2013">Generation 8 / 2013</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-9-2015">Generation 9 / 2015</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-10">Generation 10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-11">Generation 11</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers/intel_extreme/generations.html#generation-12">Generation 12</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="busses/agp_gart/ReadMe.html">AGP (and PCI-express) Graphics Address Re-Mapping Table</a></li>
+<li class="toctree-l1"><a class="reference internal" href="busses/bluetooth/overview.html">Bluetooth overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="busses/sdhci/sdhci_mmc_driver.html">SDHCI MMC Driver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="busses/sdhci/sdhci_mmc_driver.html#loading-and-testing-the-driver">Loading and testing the driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="busses/sdhci/sdhci_mmc_driver.html#insight-into-the-code-and-future-tasks">Insight into the code and future tasks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="busses/usb/USB_stack_design.html">The USB stack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/boot/boot_process_specs.html">Haiku boot process specification</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/boot/boot_process_specs.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/boot/boot_process_specs.html#booting-from-bios">Booting from BIOS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/boot/boot_process_specs.html#open-firmware">Open Firmware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/boot/boot_process_specs.html#u-boot">U-Boot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/boot/boot_process_specs.html#efi">EFI</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/boot/Debugging_Bootloaders_GEF.html">Bootloader debugging with GEF</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/boot/Debugging_Bootloaders_GEF.html#building-haiku">Building Haiku</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/boot/Debugging_Bootloaders_GEF.html#launching-haiku-in-qemu">Launching Haiku in QEMU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/boot/Debugging_Bootloaders_GEF.html#attaching-gef">Attaching GEF</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kernel/pci_serial_debug.html">Using PCI serial ports for debugging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kernel/pci_serial_debug.html#devices-known-to-work">Devices known to work</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/pci_serial_debug.html#devices-to-be-tested">Devices to be tested</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel/pci_serial_debug.html#configuring">Configuring</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="#">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="build/configure.html">The configure script</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

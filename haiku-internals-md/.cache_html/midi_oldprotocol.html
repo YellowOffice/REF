@@ -1,0 +1,621 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The BeOS R5 Midi Kit protocol &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Misc notes" href="stuff.html" />
+    <link rel="prev" title="How libmidi1 works" href="midi1.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>The BeOS R5 Midi Kit protocol</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="midi1.html">How libmidi1 works</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="stuff.html">Misc notes</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="the-beos-r5-midi-kit-protocol">
+<h1>The BeOS R5 Midi Kit protocol<a class="headerlink" href="#the-beos-r5-midi-kit-protocol" title="Permalink to this headline">¶</a></h1>
+<p>In the course of writing the OpenBeOS Midi Kit, I spent some time
+looking at how BeOS R5’s libmidi2.so and midi_server communicate. Not
+out of a compulsion to clone this protocol, but to learn from it. After
+all, the Be engineers spent a lot of time thinking about this already,
+and it would be foolish not to build on their experience. Here is what I
+have found out.</p>
+<p>Two kinds of communication happen: administrative tasks and MIDI events.
+The housekeeping stuff is done by sending BMessages between the
+BMidiRoster and the midi_server. MIDI events are sent between producers
+and consumers using ports, without intervention from the server.</p>
+<p>This document describes the BMessage protocol. The protocol appears to
+be asynchronous, which means that when BMidiRoster sends a message to
+the midi_server, it does not wait around for a reply, even though the
+midi_server replies to all messages. The libmidi2 functions <em>do</em> block
+until the reply is received, though, so client code does not have to
+worry about any of this.</p>
+<p>Both BMidiRoster and the midi_server can initiate messages. BMidiRoster
+typically sends a message when client code calls one of the functions
+from a libmidi2 class. When the midi_server sends messages, it is to
+keep BMidiRoster up-to-date about changes in the roster. BMidiRoster
+never replies to messages from the server. The encoding of the BMessage
+‘what’ codes indicates their direction. The ‘Mxxx’ messages are sent
+from libmidi2 to the midi_server. The ‘mXXX’ messages go the other way
+around: from the server to a client.</p>
+<hr class="docutils" />
+<div class="section" id="who-does-what">
+<h2>Who does what?<a class="headerlink" href="#who-does-what" title="Permalink to this headline">¶</a></h2>
+<p>The players here are the midi_server, which is a normal BApplication,
+and all the client apps, also BApplications. The client apps have loaded
+a copy of libmidi2 into their own address space. The main class from
+libmidi2 is BMidiRoster. The BMidiRoster has a BLooper that communicates
+with the midi_server’s BLooper.</p>
+<p>The midi_server keeps a list of <em>all</em> endpoints in the system, even
+local, nonpublished, ones. Each BMidiRoster instance keeps its own list
+of remote published endpoints, and all endpoints local to this
+application. It does not know about remote endpoints that are not
+published yet.</p>
+<p>Whenever you make a change to one of your own endpoints, your
+BMidiRoster notifies the midi_server. If your endpoint is published, the
+midi_server then notifies all of the other BMidiRosters, so they can
+update their local rosters. It does <em>not</em> notify your own app!
+(Sometimes, however, the midi_server also notifies everyone else even if
+your local endpoint is <em>not</em> published. The reason for this escapes me,
+because the other BMidiRosters have no access to those endpoints
+anyway.)</p>
+<p>By the way, “notification” here means the internal communications
+between server and libmidi, not the B_MIDI_EVENT messages you receive
+when you call BMidiRoster::StartWatching().</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidiroster-midiroster">
+<h2>BMidiRoster::MidiRoster()<a class="headerlink" href="#bmidiroster-midiroster" title="Permalink to this headline">¶</a></h2>
+<p>The first time it is called, this function creates the one-and-only
+instance of BMidiRoster. Even if you don’t explicitly call it yourself,
+it is used behind-the-scenes anyway by any of the other BMidiRoster
+functions. MidiRoster() constructs a BLooper and gets it running. Then
+it sends a BMessenger with the looper’s address to the midi_server:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mapp</span> <span class="p">(</span><span class="mh">0x4d617070</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1298231408</span><span class="p">)</span>
+    <span class="n">entry</span>       <span class="n">be</span><span class="p">:</span><span class="n">msngr</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MSNG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>The server now responds with mOBJ messages for all <em>remote</em> <em>published</em>
+producers and consumers. (Obviously, this list only contains remote
+objects because by now you can’t have created any local endpoints yet.)</p>
+<p>For a consumer this message looks like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mOBJ</span> <span class="p">(</span><span class="mh">0x6d4f424a</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833910858</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">consumer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x1</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">be</span><span class="p">:</span><span class="n">latency</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">port</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x1dab</span> <span class="p">(</span><span class="mi">7595</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;/dev/midi/vbus0&quot;</span>
+</pre></div>
+</div>
+<p>(Oddness: why is be:latency a LONG and not a LLNG? Since latency is
+expressed in microseconds using a 64-bit bigtime_t, you’d expect the
+midi_server to send all 64 of those bits… In the ‘Mnew’ message, on
+the other hand, be:latency <em>is</em> a LLGN.)</p>
+<p>And for a producer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mOBJ</span> <span class="p">(</span><span class="mh">0x6d4f424a</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833910858</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">producer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x2</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;/dev/midi/vbus0&quot;</span>
+</pre></div>
+</div>
+<p>Note that the be:name field is not present if the endpoint has no name.
+That is, if the endpoint was constructed by passing a NULL name into the
+BMidiLocalConsumer() or BMidiLocalProducer() constructor.</p>
+<p>Next up are notifications for <em>all</em> connections, even those between
+endpoints that are not registered:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mCON</span> <span class="p">(</span><span class="mh">0x6d434f4e</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833127758</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">producer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x13</span> <span class="p">(</span><span class="mi">19</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">consumer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x14</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>These messages are followed by an Msyn message:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Msyn</span> <span class="p">(</span><span class="mh">0x4d73796e</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1299413358</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And finally the (asynchronous) reply:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Only after this reply is received, MidiRoster() returns.</p>
+<p>The purpose of the Msyn message is not entirely clear. (Without it, Be’s
+libmidi2 blocks in the MidiRoster() call.) Does it signify the end of
+the list of endpoints? Why doesn’t libmidi2 simply wait for the final
+reply?</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidilocalproducer-constructor">
+<h2>BMidiLocalProducer constructor<a class="headerlink" href="#bmidilocalproducer-constructor" title="Permalink to this headline">¶</a></h2>
+<p>BMidiRoster, on behalf of the constructor, sends the following to the
+midi_server:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mnew</span> <span class="p">(</span><span class="mh">0x4d6e6577</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1299080567</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="nb">type</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;producer&quot;</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">21</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;MIDI Keyboard output&quot;</span>
+</pre></div>
+</div>
+<p>The be:name field is optional.</p>
+<p>The reply includes the ID for the new endpoint. This means that the
+midi_server assigns the IDs, and any endpoint gets an ID whether it is
+published or not.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x11</span> <span class="p">(</span><span class="mi">17</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Unlike many other Be API classes, BMidiLocalProducer and
+BMidiLocalConsumer don’t have an InitCheck() method. But under certain
+odd circumstances (such as the midi_server not running), creating the
+endpoint might fail. How does client code check for that? Well, it turns
+out that upon failure, the endpoint is assigned ID 0, so you can check
+for that. In that case, the endpoint’s refcount is 0 and you should not
+Release() it. (That is stupid, actually, because Release() is the only
+way that you can destroy the object. Our implementation should bump the
+endpoint to 1 even on failure!)</p>
+<p>If another app creates a new endpoint, your BMidiRoster is not notified.
+The remote endpoint is not published yet, so your app is not supposed to
+see it.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidilocalconsumer-constructor">
+<h2>BMidiLocalConsumer constructor<a class="headerlink" href="#bmidilocalconsumer-constructor" title="Permalink to this headline">¶</a></h2>
+<p>This is similar to the BMidiLocalProducer constructor, although the
+contents of the message differ slightly. Again, be:name is optional.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mnew</span> <span class="p">(</span><span class="mh">0x4d6e6577</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1299080567</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="nb">type</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;consumer&quot;</span>
+    <span class="n">entry</span>     <span class="n">be</span><span class="p">:</span><span class="n">latency</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LLNG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">port</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x4c0</span> <span class="p">(</span><span class="mi">1216</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;InternalMIDI&quot;</span>
+</pre></div>
+</div>
+<p>And the reply:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x11</span> <span class="p">(</span><span class="mi">17</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Before it sends the message to the server, the constructor creates a new
+port with the name “MidiEventPort” and a queue length (capacity) of 1.</p>
+<hr class="docutils" />
+<p>BMidiEndpoint::Register()
+BMidiRoster::Register()
+————————-</p>
+<p>Sends the same message for producers and consumers:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mreg</span> <span class="p">(</span><span class="mh">0x4d726567</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1299342695</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x17f</span> <span class="p">(</span><span class="mi">383</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The reply:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>If you try to Register() an endpoint that is already registered,
+libmidi2 still sends the message. (Which could mean that BMidiRoster
+does not keep track of this registered state.) The midi_server simply
+ignores that request, and sends back error code 0 (B_OK). So the API
+does not flag this as an error.</p>
+<p>If you send an invalid be:id, the midi_server returns error code -1
+(General OS Error, B_ERROR). If you try to Register() a remote endpoint,
+libmidi2 immediately returns error code -1, and does not send a message
+to the server.</p>
+<p>If another app Register()’s a producer, your BMidiRoster receives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mOBJ</span> <span class="p">(</span><span class="mh">0x6d4f424a</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833910858</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">producer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x17</span> <span class="p">(</span><span class="mi">23</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;a name&quot;</span>
+</pre></div>
+</div>
+<p>If the other app registers a consumer, your BMidiRoster receives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mOBJ</span> <span class="p">(</span><span class="mh">0x6d4f424a</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833910858</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">consumer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x19</span> <span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">be</span><span class="p">:</span><span class="n">latency</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">port</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0xde9</span> <span class="p">(</span><span class="mi">3561</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;a name&quot;</span>
+</pre></div>
+</div>
+<p>These are the same messages you get when your BMidiRoster instance is
+constructed. In both messages, the be:name field is optional again.</p>
+<p>If the other app Register()’s the endpoint more than once, you still get
+only one notification. So the midi_server simply ignores that second
+publish request.</p>
+<hr class="docutils" />
+<p>BMidiEndpoint::Unregister()
+BMidiRoster::Unregister()
+—————————</p>
+<p>Sends the same message for producers and consumers:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Munr</span> <span class="p">(</span><span class="mh">0x4d756e72</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1299541618</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x17f</span> <span class="p">(</span><span class="mi">383</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The reply:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>If you try to Unregister() and endpoint that is already unregistered,
+libmidi2 still sends the message. The midi_server simply ignores that
+request, and sends back error code 0 (B_OK). So the API does not flag
+this as an error. If you try to Unregister() a remote endpoint, libmidi2
+immediately returns error code -1, and does not send a message to the
+server.</p>
+<p>When another app Unregister()’s one of its own endpoints, your
+BMidiRoster receives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mDEL</span> <span class="p">(</span><span class="mh">0x6d44454c</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833190732</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x17</span> <span class="p">(</span><span class="mi">23</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When the other app deletes that endpoint (refcount is now 0) and it is
+not unregistered yet, your BMidiRoster also receives that mDEL message.
+Multiple Unregisters() are ignored again by the midi_server.</p>
+<p>If an app quits without properly cleaning up, i.e. it does not
+Unregister() and Release() its endpoints, then the midi_server’s roster
+contains a stale endpoint. As soon as the midi_server recognizes this
+(for example, when an application tries to connect that endpoint), it
+sends all BMidiRosters an mDEL message for this endpoint. (This message
+is sent whenever the midi_server feels like it, so libmidi2 can receive
+this message while it is still waiting for a reply to some other
+message.) If the stale endpoint is still on the roster and you (re)start
+your app, then you receive an mOBJ message for this endpoint during the
+startup handshake. A little later you will receive the mDEL.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidiendpoint-release">
+<h2>BMidiEndpoint::Release()<a class="headerlink" href="#bmidiendpoint-release" title="Permalink to this headline">¶</a></h2>
+<p>Only sends a message if the refcount of local objects (published or not)
+becomes 0:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mdel</span> <span class="p">(</span><span class="mh">0x4d64656c</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1298425196</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x17f</span> <span class="p">(</span><span class="mi">383</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The corresponding reply:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>If you did not Unregister() a published endpoint before you Release()’d
+it, no ‘Munr’ message is sent. Of course, the midi_server is smart
+enough to realize that this endpoint should be wiped from the roster
+now. Likewise, if this endpoint is connected to another endpoint,
+Release() will not send a separate ‘Mdis’ message, but the server <em>will</em>
+disconnect them. (This, of course, only happens when you Release() local
+objects. Releasing a proxy has no impact on the connection with the real
+endpoint.)</p>
+<p>When you Release() a proxy (a remote endpoint) and its refcount becomes
+0, libmidi2 does not send an ‘Mdel’ message to the server. After all,
+the object is not deleted, just your proxy. If the remote endpoint still
+exists (i.e. IsValid() returns true), the BMidiRoster actually keeps a
+cached copy of the proxy object around, just in case you need it again.
+This means you can do this: endp = NextEndpoint(); endp-&gt;Release(); (now
+refcount is 0) endp- &gt;Acquire(); (now refcount is 1 again). But I advice
+against that since it doesn’t work for all objects; local and dead
+remote endpoints <em>will</em> be deleted when their refcount reaches zero.</p>
+<p>In Be’s implementation, if you Release() a local endpoint that already
+has a zero refcount, libmidi still sends out the ‘Mdel’ message. It also
+drops you into the debugger. (I think it should return an error code
+instead, it already has a status_t.) However, if you Release() proxies a
+few times too many, your app does not jump into the debugger. (Again, I
+think the return result should be an error code here – for OpenBeOS R1
+I think we should jump into the debugger just like with local objects).
+Hmm, actually, whether you end up in the debugger depends on the
+contents of memory after the object is deleted, because you perform the
+extra Release() on a dead object. Don’t do that.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidiendpoint-setname">
+<h2>BMidiEndpoint::SetName()<a class="headerlink" href="#bmidiendpoint-setname" title="Permalink to this headline">¶</a></h2>
+<p>For local endpoints, both unpublished and published, libmidi2 sends:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mnam</span> <span class="p">(</span><span class="mh">0x4d6e616d</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1299079533</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x17f</span> <span class="p">(</span><span class="mi">383</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;b name&quot;</span>
+</pre></div>
+</div>
+<p>And receives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>You cannot rename remote endpoints. If you try, libmidi2 will simply
+ignore your request. It does not send a message to the midi_server.</p>
+<p>If another application renames one of its own endpoints, all other
+BMidiRosters receive:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mREN</span> <span class="p">(</span><span class="mh">0x6d52454e</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1834108238</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x5</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>        <span class="n">be</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;CSTR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;b name&quot;</span>
+</pre></div>
+</div>
+<p>You receive this message even if the other app did not publish its
+endpoint. This seems rather strange, because your BMidiRoster has no
+knowledge of this particular endpoint yet, so what is it to do with this
+message? Ignore it, I guess.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidiendpoint-getproperties">
+<h2>BMidiEndpoint::GetProperties()<a class="headerlink" href="#bmidiendpoint-getproperties" title="Permalink to this headline">¶</a></h2>
+<p>For <em>any</em> kind of endpoint (local non-published, local published,
+remote) libmidi2 sends the following message to the server:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mgpr</span> <span class="p">(</span><span class="mh">0x4d677072</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1298624626</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x2b2</span> <span class="p">(</span><span class="mi">690</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>       <span class="n">be</span><span class="p">:</span><span class="n">props</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MSGG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>(Why this “get properties” request includes a BMessage is a mistery to
+me. The midi_server does not appear to copy its contents into the reply,
+which would have made at least some sense. The BMessage from the client
+is completely overwritten with the endpoint’s properties.)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>       <span class="n">be</span><span class="p">:</span><span class="n">props</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MSGG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>This means that endpoint properties are stored in the server only, not
+inside the BMidiEndpoints, and not by the local BMidiRosters.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidiendpoint-setproperties">
+<h2>BMidiEndpoint::SetProperties()<a class="headerlink" href="#bmidiendpoint-setproperties" title="Permalink to this headline">¶</a></h2>
+<p>For local endpoints, published or not, libmidi2 sends the following
+message to the server:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mspr</span> <span class="p">(</span><span class="mh">0x4d737072</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1299411058</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x17f</span> <span class="p">(</span><span class="mi">383</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>       <span class="n">be</span><span class="p">:</span><span class="n">props</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MSGG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>And expects this back:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>You cannot change the properties of remote endpoints. If you try,
+libmidi2 will ignore your request. It does not send a message to the
+midi_server, and it returns the -1 error code (B_ERROR).</p>
+<p>If another application changes the properties of one of its own
+endpoints, all other BMidiRosters receive:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mPRP</span> <span class="p">(</span><span class="mh">0x6d505250</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833980496</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x13</span> <span class="p">(</span><span class="mi">19</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>  <span class="n">be</span><span class="p">:</span><span class="n">properties</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MSGG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>You receive this message even if the other app did not publish its
+endpoint.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidilocalconsumer-setlatency">
+<h2>BMidiLocalConsumer::SetLatency()<a class="headerlink" href="#bmidilocalconsumer-setlatency" title="Permalink to this headline">¶</a></h2>
+<p>For local endpoints, published or not, libmidi2 sends the following
+message to the server:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mlat</span> <span class="p">(</span><span class="mh">0x4d6c6174</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1298948468</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">be</span><span class="p">:</span><span class="n">latency</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LLNG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x3e8</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x14f</span> <span class="p">(</span><span class="mi">335</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And receives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>If another application changes the latency of one of its own consumers,
+all other BMidiRosters receive:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mLAT</span> <span class="p">(</span><span class="mh">0x6d4c4154</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833714004</span><span class="p">)</span>
+    <span class="n">entry</span>          <span class="n">be</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x15</span> <span class="p">(</span><span class="mi">21</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">be</span><span class="p">:</span><span class="n">latency</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LLNG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x3e8</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You receive this message even if the other app did not publish its
+endpoint.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidiproducer-connect">
+<h2>BMidiProducer::Connect()<a class="headerlink" href="#bmidiproducer-connect" title="Permalink to this headline">¶</a></h2>
+<p>The message:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mcon</span> <span class="p">(</span><span class="mh">0x4d636f6e</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1298362222</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">producer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x17f</span> <span class="p">(</span><span class="mi">383</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">consumer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x376</span> <span class="p">(</span><span class="mi">886</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The answer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>The server sends back a B_ERROR result if you specify wrong ID’s. When
+you try to connect a producer and consumer that are already connected to
+each other, libmidi2 still sends the ‘Mcon’ message to the server (even
+though it could have known these endpoints are already connected). In
+that case, the server responds with a B_ERROR code as well.</p>
+<p>When another app makes the connection, your BMidiRoster receives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mCON</span> <span class="p">(</span><span class="mh">0x6d434f4e</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833127758</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">producer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x13</span> <span class="p">(</span><span class="mi">19</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">consumer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x14</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note: your BMidiRoster receives this notification even if the producer
+or the consumer (or both) are not registered endpoints.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="bmidiproducer-disconnect">
+<h2>BMidiProducer::Disconnect()<a class="headerlink" href="#bmidiproducer-disconnect" title="Permalink to this headline">¶</a></h2>
+<p>The message:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OUT</span> <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">Mdis</span> <span class="p">(</span><span class="mh">0x4d646973</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1298426227</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">producer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x309</span> <span class="p">(</span><span class="mi">777</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">consumer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x393</span> <span class="p">(</span><span class="mi">915</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The answer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span>  <span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">entry</span>      <span class="n">be</span><span class="p">:</span><span class="n">result</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x0</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>     <span class="n">_previous_</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>The server sends back a B_ERROR result if you specify wrong ID’s. When
+you try to disconnect a producer and consumer that are not connected to
+each other, libmidi2 still sends the ‘Mdis’ message to the server (even
+though it could have known these endpoints are not connected). In that
+case, the server responds with a B_ERROR code as well.</p>
+<p>When another app breaks the connection, your BMidiRoster receives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IN</span>  <span class="n">BMessage</span><span class="p">:</span> <span class="n">what</span> <span class="o">=</span> <span class="n">mDIS</span> <span class="p">(</span><span class="mh">0x6d444953</span><span class="p">,</span> <span class="ow">or</span> <span class="mi">1833191763</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">producer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x13</span> <span class="p">(</span><span class="mi">19</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">entry</span>    <span class="n">be</span><span class="p">:</span><span class="n">consumer</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;LONG&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mh">0x14</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note: your BMidiRoster receives this notification even if the producer
+or the consumer (or both) are not registered endpoints.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="watchin">
+<h2>Watchin’<a class="headerlink" href="#watchin" title="Permalink to this headline">¶</a></h2>
+<p>BMidiRoster::StartWatching() and StopWatching() do not send messages to
+the midi_server. This means that the BMidiRoster itself, and not the
+midi_server, sends the notifications to the messenger. It does this
+whenever it receives a message from the midi_server.</p>
+<p>The relationship between midi_server messages and B_MIDI_EVENT
+notifications is as follows:</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">message</th>
+<th class="head">notification</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>mOBJ</td>
+<td>B_MIDI_REGISTERED</td>
+</tr>
+<tr class="row-odd"><td>mDEL</td>
+<td>B_MIDI_UNREGISTERED</td>
+</tr>
+<tr class="row-even"><td>mCON</td>
+<td>B_MIDI_CONNECTED</td>
+</tr>
+<tr class="row-odd"><td>mDIS</td>
+<td>B_MIDI_DISCONNECTED</td>
+</tr>
+<tr class="row-even"><td>mREN</td>
+<td>B_MIDI_CHANGED_NAME</td>
+</tr>
+<tr class="row-odd"><td>mLAT</td>
+<td>B_MIDI_CHANGED_LATENCY</td>
+</tr>
+<tr class="row-even"><td>mPRP</td>
+<td>B_MIDI_CHANGED_PROPERTIES</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>For each message on the left, the watcher will receive the corresponding
+notification on the right.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="other-observations">
+<h2>Other observations<a class="headerlink" href="#other-observations" title="Permalink to this headline">¶</a></h2>
+<p>Operations that do not send messages to the midi_server:</p>
+<ul class="simple">
+<li>BMidiEndpoint::Acquire(). This means reference counting is done
+locally by BMidiRoster. Release() doesn’t send a message either,
+unless the refcount becomes 0 and the object is deleted. (Which
+suggests that it is actually the destructor and not Release() that
+sends the message.)</li>
+<li>BMidiRoster::NextEndpoint(), NextProducer(), NextConsumer(),
+FindEndpoint(), FindProducer(), FindConsumer(). None of these
+functions send messages to the midi_server. This means that each
+BMidiRoster instance keeps its own list of available endpoints. This
+is why it receives ‘mOBJ’ messages during the startup handshake, and
+whenever a new remote endpoint is registered, and ‘mDEL’ messages for
+every endpoint that disappears. Even though the NextXXX() functions
+do not return locally created objects, this “local roster” <em>does</em>
+keep track of them, since FindXXX() <em>do</em> return local endpoints.</li>
+<li>BMidiEndpoint::Name(), ID(), IsProducer(), IsConsumer(), IsRemote(),
+IsLocal() IsPersistent(). BMidiConsumer::Latency().
+BMidiLocalConsumer::GetProducerID(), SetTimeout(). These all appear
+to consult BMidiRoster’s local roster.</li>
+<li>BMidiEndpoint::IsValid(). This function simply looks at BMidiRoster’s
+local roster to see whether the remote endpoint is still visible,
+i.e. not unregistered. It does not determine whether the endpoint’s
+application is still alive, or “ping” the endpoint or anything fancy
+like that.</li>
+<li>BMidiProducer::IsConnected(), Connections(). This means that
+BMidiRoster’s local roster, or maybe the BMidiProducers themselves
+(including the proxies) keep track of the various connections.</li>
+<li>BMidiLocalProducer::Connected(), Disconnected(). These methods are
+invoked when any app (including your own) makes or breaks a
+connection on one of your local producers. These hooks are invoked
+before the B_MIDI_EVENT messages are sent to any watchers.</li>
+<li>Quitting your app. Even though the BMidiRoster instance is deleted
+when the app quits, it does not let the midi_server know that the
+application in question is now gone. Any endpoints you have
+registered are not automatically unregistered. This means that the
+midi_server is left with some stale information. Undoubtedly, there
+is a mechanism in place to clean this up. The same mechanism would be
+used to clean up apps that did not exit cleanly, or that crashed.</li>
+</ul>
+<p>Other stuff:</p>
+<ul class="simple">
+<li>libmidi2.so exports an int32 symbol called “midi_debug_level”. If you
+set it to a non-zero value, libmidi2 will dump a lot of interesting
+debug info on stdout. To do this, declare the variable in your app
+with “extern int32 midi_debug_level;”, and then set it to some high
+value later: “midi_debug_level = 0x7FFFFFFF;” Now run your app from a
+Terminal and watch libmidi2 do its thing.</li>
+<li>libmidi2.so also exports an int32 symbol called
+“midi_dispatcher_priority”. This is the runtime priority of the
+thread that fields MIDI events to consumers.</li>
+</ul>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="midi1.html">How libmidi1 works</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="stuff.html">Misc notes</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,192 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Packaging Policy &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Packaging Policy</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="packaging-policy">
+<h1>Packaging Policy<a class="headerlink" href="#packaging-policy" title="Permalink to this headline">¶</a></h1>
+<p>This document defines the policy for creating packages.</p>
+<div class="section" id="multiple-packages-per-software">
+<h2>Multiple Packages per Software<a class="headerlink" href="#multiple-packages-per-software" title="Permalink to this headline">¶</a></h2>
+<p>Installation files of a software shall be put into separated packages according
+to their purpose. For a software “foo”:</p>
+<ul class="simple">
+<li>Package “foo”: Contains all runtime files, i.e. everything needed to “run” the
+software. This may include executables (e.g. executable “bin/foo”), shared
+libraries (e.g. “lib/libfoo.so”), data files
+(e.g. “data/foo/foo-runtime-data”).</li>
+<li>Package “foo_devel”: Contains only the files needed for development. This
+includes header files and static libraries. Shared libraries are not to be
+included. Instead the package must declare package “foo” with the matching
+version as a requirement.</li>
+<li>Package “foo_doc”: Contains the documentation for using “foo”.</li>
+<li>Package “foo_devel_doc”: Contains the documentation for “foo” development,
+like API documentation etc.</li>
+<li>Package “foo_debuginfo”: Contains the debug information for the package “foo”.</li>
+</ul>
+<p>If multiple packages are defined, they must not contain any common files.</p>
+<p>If a software contains client and server software that can be used independently
+from each other, two separate sets of packages shall be created.</p>
+</div>
+<div class="section" id="provides-declaration">
+<h2>Provides Declaration<a class="headerlink" href="#provides-declaration" title="Permalink to this headline">¶</a></h2>
+<p>A package “foo” must declare the following provided resolvables:</p>
+<ul class="simple">
+<li>“foo=&lt;version&gt;” with &lt;version&gt; naming the exact version of the package.</li>
+<li>“cmd:&lt;name&gt;=&lt;version&gt;” for each executable &lt;name&gt; with version &lt;version&gt;
+installed in “bin/”. This includes a declaration for “cmd:foo”, if there is an
+executable named like the package.</li>
+<li>“lib:&lt;name&gt;=&lt;version&gt;” for each shared library &lt;name&gt; (not including a suffix,
+e.g. “libfoo”) with version &lt;version&gt; installed in “lib/”.</li>
+<li>“devel:&lt;name&gt;=&lt;version&gt;” for each library &lt;name&gt; (not including a suffix,
+e.g. “libfoo”) with version &lt;version&gt; for which development files (library
+symlinks in “develop/lib” and header files in “develop/headers”) are included.</li>
+</ul>
+<p>Any instance of ‘-‘ in &lt;name&gt; shall be replaced by ‘_’. If the backward
+compatibility of a resolvable is known, a “compat &gt;= &lt;compatibleVersion&gt;” shall
+be added accordingly.</p>
+</div>
+<div class="section" id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<p>If a package “foo” provides documentation (which it should, of course), in many
+cases that can be provided in different formats:</p>
+<ul class="simple">
+<li>Any kind of user documentation belongs in a subdirectory of “documentation”<ul>
+<li>Man pages is the preferred format for terminal and should be installed into
+the corresponding folders in the subdirectory “man”.</li>
+<li>Info files are provided by many packages. If at all desirable, they should
+be installed into the subdirectory “info”. One problem with info files is
+that all packages currently contain a file named “documentation/info/dir”,
+which supposedly is the list of all available info files, but since each
+package provides an instance of this file containing only its own info
+files, an arbitrary dir file is made visible via packagefs. The file should
+therefore not be include in a package.</li>
+<li>Other documentation for a package foo – HTML, a simple ReadMe, sample
+documents, PDFs, etc. – goes into subdirectory “packages/foo”. If it is
+likely that multiple versions of a package may be installed, then a version
+string (as appropriate just major, major and minor, or even full (but no
+revision)) should be appended, e.g. “package/foo-2” or “package/foo-2.13”.</li>
+</ul>
+</li>
+<li>For a package foo_devel developer documentation, except man and info pages,
+should go into “develop/documentation/foo”. A version string may be appended
+to the directory name as well. When it is unclear what is developer
+documentation or it isn’t really possible to separate it from user
+documentation “documentation/foo” should be used.</li>
+</ul>
+</div>
+<div class="section" id="data-files">
+<h2>Data Files<a class="headerlink" href="#data-files" title="Permalink to this headline">¶</a></h2>
+<p>Data files for a package foo shall generally be placed in a directory
+“data/foo”. If it is likely that multiple versions of a package may be
+installed, then a version string shall be appended. Data (but not
+settings/configuration) files generated at run-time shall be placed in
+“cache/foo” or “var/foo”, depending on the kind of data the files contain. For
+data files, both read-only or generated, that are shared between different
+packages/software a differently named subdirectory may be used as appropriate
+(e.g. font files are placed in “data/fonts”).</p>
+</div>
+<div class="section" id="writable-and-settings-files-and-directories">
+<h2>Writable and Settings Files and Directories<a class="headerlink" href="#writable-and-settings-files-and-directories" title="Permalink to this headline">¶</a></h2>
+<p>All global writable files and directories as well as user settings files and
+directories that the package includes or the packaged software creates or
+requires the user to create shall be declared by the package (via
+GLOBAL_WRITABLE_FILES respectively USER_SETTINGS_FILES in the build recipe) in
+the following way:</p>
+<ul>
+<li><p class="first">A user specific settings file shall never be installed on package activation.
+Usually user specific settings files are completely optional. In the rare case
+that a software requires a user specific settings, the user will have to
+create it manually. In either case, if the package includes a template user
+settings file, that should be declared:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">USER_SETTINGS_FILES</span><span class="o">=</span><span class="s2">&quot;settings/foo template data/foo/user-settings-template&quot;</span>
+</pre></div>
+</div>
+<p>If no template file is included, the settings file shall still be declared:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">USER_SETTINGS_FILES</span><span class="o">=</span><span class="s2">&quot;settings/foo&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Since many ported software requires a global settings file or other writable
+files, a default version of such a file can be provided and is automatically
+installed on package activation. In that case the package must also declare
+what shall be done with a user-modified file when the package is updated.
+E.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">GLOBAL_WRITABLE_FILES</span><span class="o">=</span><span class="s2">&quot;settings/foo keep-old&quot;</span>
+</pre></div>
+</div>
+<p>“keep-old” indicates that the software can read old files and the
+user-modified file should be kept. “manual” indicates that the software may
+not be able to read an older file and the user may have to manually adjust it.
+“auto-merge” indicates that the file format is simple text and a three-way
+merge shall be attempted. If a default settings file is not included in the
+package, the settings file shall still be declared, just without the
+additional keyword.</p>
+</li>
+</ul>
+<p>In both cases, user settings files and global writable files, the “directory”
+keyword can be used to indicate that the given path actually refers to a
+directory.</p>
+</div>
+<div class="section" id="post-installation-scripts">
+<h2>Post-Installation Scripts<a class="headerlink" href="#post-installation-scripts" title="Permalink to this headline">¶</a></h2>
+<p>A package may include one or more post-installation scripts. The scripts are
+executed whenever the package is activated (for the first time, but also after
+package updates and first boot of a newly installed OS). They shall be placed
+in “boot/post-install” and declared explicitly by the package (via
+POST_INSTALL_SCRIPTS in the build recipe). A post-install script should be
+considered the last resort. It should only be used, if there’s no reasonable
+alternative.  A typical use would be to create a desktop icon that the user
+can move around or delete.</p>
+</div>
+<div class="section" id="pre-uninstallation-scripts">
+<h2>Pre-Uninstallation Scripts<a class="headerlink" href="#pre-uninstallation-scripts" title="Permalink to this headline">¶</a></h2>
+<p>These undo the effects of a post-installation script and usually are put
+into “boot/pre-uninstall”.  A typical use is to remove desktop icons.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

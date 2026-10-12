@@ -1,0 +1,101 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Misc notes &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Testing the Midi Kit" href="testing.html" />
+    <link rel="prev" title="The BeOS R5 Midi Kit protocol" href="oldprotocol.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Misc notes</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="oldprotocol.html">The BeOS R5 Midi Kit protocol</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="testing.html">Testing the Midi Kit</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="misc-notes">
+<h1>Misc notes<a class="headerlink" href="#misc-notes" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p class="first"><strong>MPU401 kernel module.</strong> If your soundcard supports MIDI input and
+output, chances are that it is powered by an MPU401 chip. Because
+this interface is so popular, BeOS comes with a kernel module that
+makes it easy to write drivers for the MPU401. Thanks to Greg Crain,
+we now have an open source version of this kernel module.</p>
+<p>The mpu401 module lives in <code class="docutils literal notranslate"><span class="pre">src/add-ons/kernel/generic/mpu401</span></code>. It
+supports both the v1 and (undocumented) v2 protocols, although v2 is
+not complete since we don’t really know how it works. Unfortunately,
+almost no existing drivers use v1; most of the drivers provided by Be
+require v2. Currently, the module returns B_ERROR when a MIDI device
+is opened with v2.</p>
+<p>For an example on how to use the MPU401 module in your own driver,
+see the source code for the “emuxki” driver elsewhere in the source
+tree.</p>
+</li>
+<li><p class="first"><strong>Clients without a BApplication.</strong> Sometimes the midi_server’s debug
+output shows an “Application -1 not registered” error message. This
+means it cannot figure out which app an incoming BMessage came from.
+The server ignores those messages.</p>
+<p>How can this happen? libmidi2 has two ways of sending messages to the
+midi_server: it either expects a reply back or not. In the first
+case, it is obvious to the midi_server what the reply address of the
+message is. In the second case, even though it is not necessary for
+the server to send a message back, it still uses the reply address to
+determine which app the message came from. For this, BMessenger uses
+be_app_messenger of the client app.</p>
+<p>However, if the client app has no BApplication object, there is no
+be_app_messenger either. Now, the midi_server cannot determine where
+the message came from and will ignore it. Is this important? For
+example, when such a client app Release()’s its endpoints, it sends a
+message to the server without a return address. Now the server
+ignores that message and does not remove the endpoint from the
+roster. Of course, after the client app has died, the endpoints will
+be removed eventually. Does all of this matter? Not really, because
+only trivial apps will have no BApplication object.</p>
+</li>
+</ul>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="oldprotocol.html">The BeOS R5 Midi Kit protocol</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="testing.html">Testing the Midi Kit</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

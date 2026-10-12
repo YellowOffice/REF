@@ -1,0 +1,147 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Swap file &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Notes on long double support" href="../arch/long_double.html" />
+    <link rel="prev" title="Plug and Play Manager" href="../obsolete_pnp_manager.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Swap file</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../obsolete_pnp_manager.html">Plug and Play Manager</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../arch/long_double.html">Notes on long double support</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="swap-file">
+<h1>Swap file<a class="headerlink" href="#swap-file" title="Permalink to this headline">¶</a></h1>
+<p>This section describes how to use swap file in Haiku and how the swap system
+works.</p>
+<div class="section" id="how-to-use-a-swap-file">
+<h2>How to use a swap file?<a class="headerlink" href="#how-to-use-a-swap-file" title="Permalink to this headline">¶</a></h2>
+<p>Like BeOS, Haiku uses “/var/swap” as default swap file. It is created
+during the boot process and its size is twice the size of physical memory by
+default. You can change its size through the VirtualMemory preference
+application and your settings will take effect after restarting the system.</p>
+<p>The default swap file “/var/swap” may not satisfy your need. Haiku allows
+adding/removing a swap file dynamically. (This is <em>NOT</em> implemented yet, since
+I do not know how to add bin commands “swapon” and “swapoff” in the system.
+It needs to be done in the future.)</p>
+</div>
+<div class="section" id="how-swap-system-works">
+<h2>How swap system works?<a class="headerlink" href="#how-swap-system-works" title="Permalink to this headline">¶</a></h2>
+<p>The virtual memory subsystem of Haiku is very similar to that of FreeBSD,
+therefore our swap system implementation is borrowed from FreeBSD.</p>
+<p>A swap system has two main functions: (1) maintain a map between anonymous
+pages and swap space, so we can page in/out when needed. (2) manage the
+allocation/deallocation of swap space. Let’s see how these are implemented in
+Haiku.</p>
+<p>In order to maintain a map between pages and swap space, we need to record
+the pages’ swap address somewhere. Here we use swap blocks. A “swap_block”
+structure contains swap address information for 32 (value of SWAP_BLOCK_PAGES)
+consecutive pages from a same cache. So whenever we look for a page in swap
+files, we should get the swap block for it. But how to get the swap block?
+Here we use hash table. All swap blocks in the system are arranged into a global
+hash table. The hash table uses a cache’s address and page index in this cache
+as hash key.</p>
+<p>Here is an example. Suppose a page has been paged out to swap space and now
+its cache wants to page it in. It works as follows: look up the swap hash table
+using address of the cache and page index as hash key, if successful, we get
+the swap block containing the this page’s swap address. Then search the swap
+block to get the exact swap address of this page. After that, we can read the
+page from swap file using vfs functions.</p>
+<p>I draw a picture and hope it could help you understand the above words.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>                ___________________________________________________________
+sSwapHashTable  |__________|___NULL___|___NULL___|___________|____NULL____|
+                     |                                 |
+                     |                                 |
+                  ___V___                           ___V___
+swap_block   /----|__0__|                  /--------|__5__|
+             |    |__3__|--------\         |    /---|__6__|
+             |    |_..._|        |         |    |   |_..._|
+             |    |__2__|----\   |         |    |   |__20_|---------------&gt;
+             |               |   |         |    |
+             |  _____________V___V_________V____V_________________________
+swap_file    `-&gt;|slot|slot|slot|slot|slot|slot|slot|slot|slot|slot|....|
+                |_0__|_1__|_2__|_3__|_4__|_5__|_6__|_7__|_8__|_9__|____|__
+</pre></div>
+</div>
+<p>The swap system also manages allocation/deallocation of swap space.     In our
+implementation, each swap file is divided into page-sized slots(called “swap
+pages”) and a swap file can be seen as an array of many swap pages(see the
+above picture). Swap page is the unit for swap space allocation/deallocation
+and we use swap page index (slot index) as swap space address instead of offset.
+All the swap pages in the system are given a unified address and we leave one
+page gap between two swap files. (e.g. there are 3 swap files in the system,
+each has 100 swap pages, the address range(to be exact, page index) for each
+swap file is: 0-99, 101-200, 202-301) Why leave a page gap between swap files?
+Because in this way, we can easily tell if two adjacent pages are in a same
+swap file. (See the code in VMAnonymousCache::Read()).</p>
+<p>The efficiency of the FreeBSD swap system lies in a special data structure:
+radix bitmap(i.e. bitmap using radix tree for hinting.) It can operate well no
+matter how much fragmentation there is and no matter how large a bitmap is
+used. I have ported the radix bitmap structure to Haiku, so our swap system
+will have a good performance. More information on radix bitmap, please look
+at the source code.</p>
+<p>Swap space allocation takes place when we swap anonymous pages out.
+In order to make the allocation less probable to fail, anonymous cache will
+reserve swap space when it is initialized. If there is not enough swap space
+left, physical memory will be reserved. Swap space deallocation happens when
+available swap space is low. The page daemon will scan a number of pages and
+if the scanned page has swap space assigned, its swap space will be freed.</p>
+<div class="section" id="acknowledgement">
+<h3>Acknowledgement<a class="headerlink" href="#acknowledgement" title="Permalink to this headline">¶</a></h3>
+<p>Special thanks to my mentor Ingo. He is a knowledged person and always
+gives me encouragement. Without his consistent and illuminating instructions,
+this project would not have reached its present status.</p>
+<p>If you find bugs or have suggestions for swap system, you can contact me
+via <a class="reference external" href="mailto:upczhsh&#37;&#52;&#48;163&#46;com">upczhsh<span>&#64;</span>163<span>&#46;</span>com</a>. Thanks in advance.</p>
+<p>Zhao Shuai - <a class="reference external" href="mailto:upczhsh&#37;&#52;&#48;163&#46;com">upczhsh<span>&#64;</span>163<span>&#46;</span>com</a> - 2008-08-21</p>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../obsolete_pnp_manager.html">Plug and Play Manager</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../arch/long_double.html">Notes on long double support</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,100 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>How libmidi1 works &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The BeOS R5 Midi Kit protocol" href="oldprotocol.html" />
+    <link rel="prev" title="Midi Kit design" href="design.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>How libmidi1 works</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="design.html">Midi Kit design</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="oldprotocol.html">The BeOS R5 Midi Kit protocol</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="how-libmidi1-works">
+<h1>How libmidi1 works<a class="headerlink" href="#how-libmidi1-works" title="Permalink to this headline">¶</a></h1>
+<p>Midi1 is implemented on top of midi2, which means that libmidi.so
+depends on libmidi2.so to do the real work. BeOS versions earlier than
+R5 did not include a midi_server, because midi1 itself did not need it.
+(A server is only really useful if data must be shared between teams,
+something that midi1 did not allow.)</p>
+<p>Midi2 is backwards compatible with midi1: The old libmidi.so still
+exists so that applications using the old API will run (providing binary
+compatibility). The old <code class="docutils literal notranslate"><span class="pre">BMidiPort</span></code> object is now a wrapper that uses
+the new <code class="docutils literal notranslate"><span class="pre">BMidiRoster</span></code> to allow connections to any published MIDI
+producer or consumer. Published MIDI objects are presented to the old
+MIDI apps as if they were physical MIDI ports.</p>
+<p>Here is a very nice picture of how <code class="docutils literal notranslate"><span class="pre">BMidiPort</span></code> works:</p>
+<p><img alt="image0" src="../_images/midiport.png" /></p>
+</div>
+<div class="section" id="the-softsynth">
+<h1>The softsynth<a class="headerlink" href="#the-softsynth" title="Permalink to this headline">¶</a></h1>
+<p>The General MIDI synthesizer is implemented in <code class="docutils literal notranslate"><span class="pre">BSoftSynth</span></code>. This is a
+private class (not usable outside the API). It is not a real
+<code class="docutils literal notranslate"><span class="pre">BMidiEndpoint</span></code>, so you will not see it appear on Patchbay. I did this
+for simplicity’s sake, for backwards compatibility (this is how the R5
+synth worked too), and because we will have to give the Midi Kit a
+complete makeover for R2 anyway.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">BMidiSynth</span></code> and <code class="docutils literal notranslate"><span class="pre">BSynth</span></code> classes delegate most of the work to
+<code class="docutils literal notranslate"><span class="pre">BSoftSynth</span></code>. Not all of their methods are implemented, since some of
+them are very obscure. It would be a lot of work to figure out what they
+do, while it is likely that no applications use them anyway. However,
+<code class="docutils literal notranslate"><span class="pre">BMidiSynth</span></code> and <code class="docutils literal notranslate"><span class="pre">BSynth</span></code> should perform most common tasks without
+problems.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BSamples</span></code> doesn’t do anything; its functions are mostly empty. In
+other words, with the OpenBeOS Midi Kit you cannot push waveform data
+into the output of the softsynth.</p>
+<p>For simplicity’s sake, <code class="docutils literal notranslate"><span class="pre">BMidiSynthFile</span></code> is implemented using
+<code class="docutils literal notranslate"><span class="pre">BMidiStore</span></code>, since the latter already knows how to parse Standard
+MIDI Files. Duplicating that functionality elsewhere would be pointless.
+However, this makes the behavior of our <code class="docutils literal notranslate"><span class="pre">BMidiSynthFile</span></code> a little
+different from what the BeBook says — as long as your applications are
+written properly, you shouldn’t notice any differences.</p>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="design.html">Midi Kit design</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="oldprotocol.html">The BeOS R5 Midi Kit protocol</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

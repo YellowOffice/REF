@@ -1,0 +1,239 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Package Management &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Building Packages" href="BuildingPackages.html" />
+    <link rel="prev" title="How to Merge Patches from NetBSD Trunk" href="../net/HowTo-Synchronize_with_NetBSD.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Package Management</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../net/HowTo-Synchronize_with_NetBSD.html">How to Merge Patches from NetBSD Trunk</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="BuildingPackages.html">Building Packages</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="package-management">
+<h1>Package Management<a class="headerlink" href="#package-management" title="Permalink to this headline">¶</a></h1>
+<p>This is a short index of the available package management related documentation.</p>
+<ul class="simple">
+<li><a class="reference external" href="Infrastructure.rst">Package Management Infrastructure</a> provides an overview of what components
+belong to Haiku’s package management infrastructure and how they work and
+interact.</li>
+<li><a class="reference external" href="BuildingPackages.rst">Building Packages</a> gives information on various aspects of the package
+building process.</li>
+<li><a class="reference external" href="DirectoryStructure.rst">Boot Volume Directory Structure</a> outlines the directory structure of a
+package management powered Haiku boot volume.</li>
+<li><a class="reference external" href="FileFormat.rst">Haiku Package File Format</a> specifies in detail the file format of Haiku
+package files (HPKG) and Haiku package repository files (HPKR).</li>
+<li><a class="reference external" href="PackagingPolicy.rst">Packaging Policy</a> defines the policy for creating Haiku packages.</li>
+<li><a class="reference external" href="PackagesStatus.rst">Packages Status</a> gives an overview of the packages needed for a Haiku
+standard build and their current status.</li>
+<li><a class="reference external" href="HybridBuilds.rst">Hybrid Builds</a> provides some information regarding hybrid builds.</li>
+<li><a class="reference external" href="HaikuDepot.rst">HaikuDepot</a> explains the concept and ideas behind HaikuDepot, the GUI package
+manager in the making.</li>
+<li><a class="reference external" href="Migration.rst">Migration</a> lists the changes that users should expect when migrating to a
+package management Haiku.</li>
+<li><a class="reference external" href="Bootstrapping.rst">Bootstrapping Haiku</a> explains the process of bootstrapping Haiku and third-party packages.</li>
+<li><a class="reference external" href="TODO.rst">TODO</a> is a list of package management related work still to be done.</li>
+<li><a class="reference external" href="https://www.haiku-os.org/tags/package-management/">Blog posts</a> on package management (the Batisseur ones are only indirectly
+package management related).</li>
+<li><a class="reference external" href="OldIdeas.rst">(Old) Package Management Ideas</a> is a collection of thoughts and discussions
+regarding package management. It has been partially obsoleted by the progress
+on the package management implementation.</li>
+<li><a class="reference external" href="http://www.youtube.com/watch?v=rNZQQM5zU-Q&amp;list=PL3FFCD4C6D384A302">http://www.youtube.com/watch?v=rNZQQM5zU-Q&amp;list=PL3FFCD4C6D384A302</a> is a video
+playlist of Ingo and Oliver explaining and demonstrating the package
+management branch at BeGeistert 2011.</li>
+</ul>
+<p>Below are links to source code related to Haiku’s package management.</p>
+<ul class="simple">
+<li>Package management has been merged into “master”, so see the <a class="reference external" href="http://cgit.haiku-os.org/haiku/">Haiku</a> and
+<a class="reference external" href="http://cgit.haiku-os.org/buildtools/">Buildtools</a> repositories for that</li>
+<li><a class="reference external" href="https://github.com/haikuports/haikuports">HaikuPorts</a> contains the build recipes of various ports.</li>
+<li><a class="reference external" href="https://github.com/haikuports/haikuports.cross">haikuports.cross</a> contains the minimal set of build recipes to bootstrap a new
+Haiku architecture.</li>
+<li><a class="reference external" href="https://github.com/haikuports/haikuporter">haikuporter</a> is the tool to create binary packages from build recipes.</li>
+</ul>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="BuildingPackages.html">Building Packages</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="BuildingPackages.html#building-a-package-with-the-package-command">Building a Package with the “package” Command</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="BuildingPackages.html#the-packageinfo">The .PackageInfo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BuildingPackages.html#version-strings">Version Strings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BuildingPackages.html#package-file-names">Package File Names</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BuildingPackages.html#example-package-file">Example package file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="BuildingPackages.html#building-a-package-with-haikuporter">Building a Package with “haikuporter”</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DirectoryStructure.html">Boot Volume Directory Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FileFormat.html">Haiku Package File Format</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="FileFormat.html#the-data-container-format">The Data Container Format</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="FileFormat.html#header">Header</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FileFormat.html#heap">Heap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FileFormat.html#toc">TOC</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="FileFormat.html#attribute-data-types">Attribute Data Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="FileFormat.html#strings">Strings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="FileFormat.html#main-toc">Main TOC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="FileFormat.html#attribute-values">Attribute Values</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="FileFormat.html#package-attributes">Package Attributes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="FileFormat.html#the-archive-format">The Archive Format</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="FileFormat.html#attribute-ids">Attribute IDs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FileFormat.html#toc-attributes">TOC Attributes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="FileFormat.html#the-package-format">The Package Format</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="FileFormat.html#the-package-format-attribute-ids">Attribute IDs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="FileFormat.html#haiku-package-repository-format">Haiku Package Repository Format</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="FileFormat.html#id2">The Data Container Format</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="FileFormat.html#id3">Header</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="FileFormat.html#id4">Attribute IDs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="HybridBuilds.html">Hybrid Builds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="HybridBuilds.html#general-requirements">General Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="HybridBuilds.html#secondary-architecture-package-requirements">Secondary Architecture Package Requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Infrastructure.html">Package Management Infrastructure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Infrastructure.html#software-installation-locations">Software Installation Locations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Infrastructure.html#software-installation">Software Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Infrastructure.html#manual-installation">Manual Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Infrastructure.html#installation-via-package-manager">Installation via Package Manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Infrastructure.html#application-bundles">Application Bundles</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Infrastructure.html#installation-location-order-and-consistency">Installation Location Order and Consistency</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Infrastructure.html#software-repositories">Software Repositories</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Infrastructure.html#standard-repositories">Standard Repositories</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Infrastructure.html#the-package-kit">The Package Kit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Infrastructure.html#localization">Localization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Migration.html">Migration to Package Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Migration.html#changes-for-users">Changes for Users</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Migration.html#changes-for-application-developers">Changes for Application Developers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Migration.html#changes-for-haiku-developers">Changes for Haiku Developers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Migration.html#changes-for-porters">Changes for Porters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="PackagingPolicy.html">Packaging Policy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="PackagingPolicy.html#multiple-packages-per-software">Multiple Packages per Software</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PackagingPolicy.html#provides-declaration">Provides Declaration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PackagingPolicy.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PackagingPolicy.html#data-files">Data Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PackagingPolicy.html#writable-and-settings-files-and-directories">Writable and Settings Files and Directories</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PackagingPolicy.html#post-installation-scripts">Post-Installation Scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PackagingPolicy.html#pre-uninstallation-scripts">Pre-Uninstallation Scripts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Bootstrapping.html">Bootstrapping Haiku</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Bootstrapping.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Bootstrapping.html#configuring-and-building">Configuring and Building</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Bootstrapping.html#how-it-works">How it works</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Bootstrapping.html#haiku-architecture-ports">Haiku Architecture Ports</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="TODO.html">packagefs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODO.html#package-daemon">Package Daemon</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODO.html#package-building">Package building</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODO.html#package-kit-manager">Package kit/manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODO.html#boot-loader">Boot loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODO.html#package-package-repository-format">Package/package repository format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODO.html#miscellaneous">Miscellaneous</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OldIdeas.html">Package Management Ideas</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="OldIdeas.html#requirements">Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#haikubits">HaikuBits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#bundles">Bundles</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#management">Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#dependencies">Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#updates">Updates</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="OldIdeas.html#implementation">Implementation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#id1">Bundles</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#install-or-not">Install or not?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#merged">Merged</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#self-contained">Self-contained</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#settings">Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="OldIdeas.html#multiple-application-version">Multiple Application Version</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#dependency-hell">Dependency Hell</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="OldIdeas.html#avoiding">Avoiding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="OldIdeas.html#tacking">Tacking</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="OldIdeas.html#libalpm">libalpm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="OldIdeas.html#pros">Pros</a></li>
+<li class="toctree-l4"><a class="reference internal" href="OldIdeas.html#cons">Cons</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="OldIdeas.html#brainstorming-results-from-begeistert">Brainstorming Results from BeGeistert</a></li>
+<li class="toctree-l2"><a class="reference internal" href="OldIdeas.html#package-format">Package Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="OldIdeas.html#references">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../net/HowTo-Synchronize_with_NetBSD.html">How to Merge Patches from NetBSD Trunk</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="BuildingPackages.html">Building Packages</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

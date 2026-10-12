@@ -1,0 +1,112 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Boot Volume Directory Structure &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Boot Volume Directory Structure</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="boot-volume-directory-structure">
+<h1>Boot Volume Directory Structure<a class="headerlink" href="#boot-volume-directory-structure" title="Permalink to this headline">¶</a></h1>
+<p>This is the directory layout of the boot volume:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">home</span><span class="o">/</span><span class="n">config</span>
+      <span class="o">&lt;</span><span class="n">like</span> <span class="n">system</span><span class="p">,</span> <span class="n">but</span> <span class="n">without</span> <span class="n">haiku_loader</span><span class="p">,</span> <span class="n">kernel_</span><span class="o">&lt;</span><span class="n">arch</span><span class="o">&gt;</span><span class="p">,</span> <span class="ow">and</span> <span class="n">runtime_loader</span><span class="o">&gt;</span>
+
+<span class="n">system</span>
+      <span class="n">add</span><span class="o">-</span><span class="n">ons</span>
+      <span class="n">apps</span>
+      <span class="nb">bin</span>
+      <span class="n">boot</span>
+      <span class="n">cache</span><span class="o">*</span>
+      <span class="n">data</span>
+      <span class="n">demos</span>
+      <span class="n">develop</span>
+      <span class="n">documentation</span>
+      <span class="n">lib</span>
+      <span class="n">non</span><span class="o">-</span><span class="n">packaged</span><span class="o">*</span>
+      <span class="n">packages</span><span class="o">*</span>
+      <span class="n">preferences</span>
+      <span class="n">servers</span>
+      <span class="n">settings</span><span class="o">*</span>
+      <span class="n">var</span><span class="o">*</span>
+
+      <span class="n">haiku_loader</span>
+      <span class="n">kernel_</span><span class="o">&lt;</span><span class="n">arch</span><span class="o">&gt;</span>
+      <span class="n">runtime_loader</span>
+
+<span class="n">trash</span>
+</pre></div>
+</div>
+<p>The structure mostly equals the pre-package management directory structure with
+the following changes:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">common</span></code> has been removed, or more correctly it has been merged into
+<code class="docutils literal notranslate"><span class="pre">system</span></code>. All system-wide software is now installed (only) in <code class="docutils literal notranslate"><span class="pre">system</span></code>.</li>
+<li>The <code class="docutils literal notranslate"><span class="pre">develop</span></code> directory has been removed and its contents has been moved to
+the <code class="docutils literal notranslate"><span class="pre">system/develop</span></code> directory.</li>
+<li>The <code class="docutils literal notranslate"><span class="pre">include</span></code> directory has been removed. Its contents lives in
+<code class="docutils literal notranslate"><span class="pre">develop/headers</span></code> now.</li>
+<li><code class="docutils literal notranslate"><span class="pre">optional</span></code> has been removed. Optional features can just be installed via the
+package manager.</li>
+<li><code class="docutils literal notranslate"><span class="pre">share</span></code> and <code class="docutils literal notranslate"><span class="pre">etc</span></code> (in <code class="docutils literal notranslate"><span class="pre">common</span></code>) have been removed. Their contents goes
+to <code class="docutils literal notranslate"><span class="pre">data</span></code>, <code class="docutils literal notranslate"><span class="pre">documentation</span></code>, or <code class="docutils literal notranslate"><span class="pre">settings</span></code> (in <code class="docutils literal notranslate"><span class="pre">system</span></code> or, for
+packages installed there, in <code class="docutils literal notranslate"><span class="pre">home</span></code>) as appropriate. There’s
+<code class="docutils literal notranslate"><span class="pre">settings/etc</span></code> which is where ported Unix software will usually store their
+global settings.</li>
+<li><code class="docutils literal notranslate"><span class="pre">apps</span></code> and <code class="docutils literal notranslate"><span class="pre">preferences</span></code> have been moved to <code class="docutils literal notranslate"><span class="pre">system</span></code> for consistency.</li>
+<li><code class="docutils literal notranslate"><span class="pre">system</span></code> and <code class="docutils literal notranslate"><span class="pre">home/config</span></code> each sport a <code class="docutils literal notranslate"><span class="pre">packages</span></code> directory, which
+contains the activated packages.</li>
+<li><code class="docutils literal notranslate"><span class="pre">system</span></code> and <code class="docutils literal notranslate"><span class="pre">home/config</span></code> themselves are mount points for two instances
+of the packagefs, i.e. each contains the virtually extracted contents of the
+activated packages in the respective <code class="docutils literal notranslate"><span class="pre">packages</span></code> subdirectory. The
+directories marked with <code class="docutils literal notranslate"><span class="pre">*</span></code> are “shine-through” directories. They are not
+provided by the packagefs, but are the underlying directories of the boot
+volume. Unlike the other directories they are writable.</li>
+<li><code class="docutils literal notranslate"><span class="pre">system</span></code> and <code class="docutils literal notranslate"><span class="pre">home/config</span></code> each contain a directory <code class="docutils literal notranslate"><span class="pre">non-packaged</span></code>
+which has the same structure as their parent directory minus the shine-through
+directories. In the <code class="docutils literal notranslate"><span class="pre">non-packaged</span></code> directories software can be installed the
+traditional – non-packaged – way.</li>
+</ul>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

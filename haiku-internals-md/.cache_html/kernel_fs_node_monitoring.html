@@ -1,0 +1,286 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Node Monitoring &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Filesystem drivers" href="../../file_systems/overview.html" />
+    <link rel="prev" title="The SPARC port" href="../arch/sparc/overview.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Node Monitoring</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../arch/sparc/overview.html">The SPARC port</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../../file_systems/overview.html">Filesystem drivers</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="node-monitoring">
+<h1>Node Monitoring<a class="headerlink" href="#node-monitoring" title="Permalink to this headline">¶</a></h1>
+<p>Creation Date: January 16, 2003
+Author(s): Axel Dörfler</p>
+<p>This document describes the feature of the BeOS kernel to monitor nodes.
+First, there is an explanation of what kind of functionality we have to
+reproduce (along with the higher level API), then we will present the
+implementation in OpenBeOS.</p>
+<div class="section" id="requirements-exported-functionality-in-beos">
+<h2>Requirements - Exported Functionality in BeOS<a class="headerlink" href="#requirements-exported-functionality-in-beos" title="Permalink to this headline">¶</a></h2>
+<p>From user-level, BeOS exports the following API as found in the
+storage/NodeMonitor.h header file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">status_t</span> <span class="n">watch_node</span><span class="p">(</span><span class="n">const</span> <span class="n">node_ref</span> <span class="o">*</span><span class="n">node</span><span class="p">,</span>
+    <span class="n">uint32</span> <span class="n">flags</span><span class="p">,</span>
+    <span class="n">BMessenger</span> <span class="n">target</span><span class="p">);</span>
+
+<span class="n">status_t</span> <span class="n">watch_node</span><span class="p">(</span><span class="n">const</span> <span class="n">node_ref</span> <span class="o">*</span><span class="n">node</span><span class="p">,</span>
+    <span class="n">uint32</span> <span class="n">flags</span><span class="p">,</span>
+    <span class="n">const</span> <span class="n">BHandler</span> <span class="o">*</span><span class="n">handler</span><span class="p">,</span>
+    <span class="n">const</span> <span class="n">BLooper</span> <span class="o">*</span><span class="n">looper</span> <span class="o">=</span> <span class="n">NULL</span><span class="p">);</span>
+
+<span class="n">status_t</span> <span class="n">stop_watching</span><span class="p">(</span><span class="n">BMessenger</span> <span class="n">target</span><span class="p">);</span>
+
+<span class="n">status_t</span> <span class="n">stop_watching</span><span class="p">(</span><span class="n">const</span> <span class="n">BHandler</span> <span class="o">*</span><span class="n">handler</span><span class="p">,</span>
+    <span class="n">const</span> <span class="n">BLooper</span> <span class="o">*</span><span class="n">looper</span> <span class="o">=</span> <span class="n">NULL</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The kernel also exports two other functions to be used from file system
+add-ons that causes the kernel to send out notification messages:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">notify_listener</span><span class="p">(</span><span class="nb">int</span> <span class="n">op</span><span class="p">,</span> <span class="n">nspace_id</span> <span class="n">nsid</span><span class="p">,</span>
+    <span class="n">vnode_id</span> <span class="n">vnida</span><span class="p">,</span> <span class="n">vnode_id</span> <span class="n">vnidb</span><span class="p">,</span>
+    <span class="n">vnode_id</span> <span class="n">vnidc</span><span class="p">,</span> <span class="n">const</span> <span class="n">char</span> <span class="o">*</span><span class="n">name</span><span class="p">);</span>
+<span class="nb">int</span> <span class="n">send_notification</span><span class="p">(</span><span class="n">port_id</span> <span class="n">port</span><span class="p">,</span> <span class="n">long</span> <span class="n">token</span><span class="p">,</span>
+    <span class="n">ulong</span> <span class="n">what</span><span class="p">,</span> <span class="n">long</span> <span class="n">op</span><span class="p">,</span> <span class="n">nspace_id</span> <span class="n">nsida</span><span class="p">,</span>
+    <span class="n">nspace_id</span> <span class="n">nsidb</span><span class="p">,</span> <span class="n">vnode_id</span> <span class="n">vnida</span><span class="p">,</span>
+    <span class="n">vnode_id</span> <span class="n">vnidb</span><span class="p">,</span> <span class="n">vnode_id</span> <span class="n">vnidc</span><span class="p">,</span>
+    <span class="n">const</span> <span class="n">char</span> <span class="o">*</span><span class="n">name</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The latter is only used for live query updates, but is obviously called
+by the former. The port/token pair identify a unique BLooper/BHandler
+pair, and it used internally to address those high-level objects from
+the kernel.</p>
+<p>When a file system calls the <code class="docutils literal notranslate"><span class="pre">notify_listener()</span></code> function, it will
+have a look if there are monitors for that node which meet the specified
+constraints - and it will call <code class="docutils literal notranslate"><span class="pre">send_notification()</span></code> for every single
+message to be send.</p>
+<p>Each of the parameters <code class="docutils literal notranslate"><span class="pre">vnida</span> <span class="pre">-</span> <span class="pre">vnidc</span></code> has a dedicated meaning:</p>
+<ul class="simple">
+<li><strong>vnida:</strong> the parent directory of the “main” node</li>
+<li><strong>vnidb:</strong> the target parent directory for a move</li>
+<li><strong>vnidc:</strong> the node that has triggered the notification to be send</li>
+</ul>
+<p>The flags parameter in <code class="docutils literal notranslate"><span class="pre">watch_node()</span></code> understands the following
+constants:</p>
+<ul class="simple">
+<li><strong>B_STOP_WATCHING</strong>
+watch_node() will stop to watch the specified node.</li>
+<li><strong>B_WATCH_NAME</strong>
+name changes are notified through a B_ENTRY_MOVED opcode.</li>
+<li><strong>B_WATCH_STAT</strong>
+changes to the node’s stat structure are notified with a
+B_STAT_CHANGED code.</li>
+<li><strong>B_WATCH_ATTR</strong>
+attribute changes will cause a B_ATTR_CHANGED to be send.</li>
+<li><strong>B_WATCH_DIRECTORY</strong>
+notifies on changes made to the specified directory, i.e.
+B_ENTRY_REMOVED, B_ENTRY_CREATED</li>
+<li><strong>B_WATCH_ALL</strong>
+is a short-hand for the flags above.</li>
+<li><strong>B_WATCH_MOUNT</strong>
+causes B_DEVICE_MOUNTED and B_DEVICE_UNMOUNTED to be send.</li>
+</ul>
+<p>Node monitors are maintained per team - every team can have up to 4096
+monitors, although there exists a private kernel call to raise this
+limit (for example, Tracker is using it intensively).</p>
+<p>The kernel is able to send the BMessages directly to the specified
+BLooper and BHandler; it achieves this using the application kit’s token
+mechanism. The message is constructed manually in the kernel, it doesn’t
+use any application kit services.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</div>
+<div class="section" id="meeting-the-requirements-in-an-optimal-way-implementation-in-openbeos">
+<h2>Meeting the Requirements in an Optimal Way - Implementation in OpenBeOS<a class="headerlink" href="#meeting-the-requirements-in-an-optimal-way-implementation-in-openbeos" title="Permalink to this headline">¶</a></h2>
+<p>If you assume that every file operation could trigger a notification
+message to be send, it’s clear that the node monitoring system must be
+optimized for sending messages. For every call to <code class="docutils literal notranslate"><span class="pre">notify_listener()</span></code>,
+the kernel must check if there are any monitors for the node that was
+updated.</p>
+<p>Those monitors are put into a hash table which has the device number and
+the vnode ID as keys. Each of the monitors maintains a list of listeners
+which specify which port/token pair should be notified for what change.
+Since the vnodes are created/deleted as needed from the kernel, the node
+monitor is maintained independently from them; a simple pointer from a
+vnode to its monitor is not possible.</p>
+<p>The main structures that are involved in providing the node monitoring
+functionality look like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">monitor_listener</span> <span class="p">{</span>
+    <span class="n">monitor_listener</span>    <span class="o">*</span><span class="nb">next</span><span class="p">;</span>
+    <span class="n">monitor_listener</span>    <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
+    <span class="n">list_link</span>       <span class="n">monitor_link</span><span class="p">;</span>
+    <span class="n">port_id</span>         <span class="n">port</span><span class="p">;</span>
+    <span class="n">int32</span>           <span class="n">token</span><span class="p">;</span>
+    <span class="n">uint32</span>          <span class="n">flags</span><span class="p">;</span>
+    <span class="n">node_monitor</span>        <span class="o">*</span><span class="n">monitor</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="n">struct</span> <span class="n">node_monitor</span> <span class="p">{</span>
+    <span class="n">node_monitor</span>        <span class="o">*</span><span class="nb">next</span><span class="p">;</span>
+    <span class="n">mount_id</span>        <span class="n">device</span><span class="p">;</span>
+    <span class="n">vnode_id</span>        <span class="n">node</span><span class="p">;</span>
+    <span class="n">struct</span> <span class="nb">list</span>     <span class="n">listeners</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>The relevant part of the I/O context structure is this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">io_context</span> <span class="p">{</span>
+    <span class="o">...</span>
+    <span class="n">struct</span> <span class="nb">list</span>     <span class="n">node_monitors</span><span class="p">;</span>
+    <span class="n">uint32</span>          <span class="n">num_monitors</span><span class="p">;</span>
+    <span class="n">uint32</span>          <span class="n">max_monitors</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>If you call <code class="docutils literal notranslate"><span class="pre">watch_node()</span></code> on a file with a flags parameter unequal to
+B_STOP_WATCHING, the following will happen in the node monitor:</p>
+<ol class="arabic simple">
+<li>The <code class="docutils literal notranslate"><span class="pre">add_node_monitor()</span></code> function does a hash lookup for the
+device/vnode pair. If there is no <code class="docutils literal notranslate"><span class="pre">node_monitor</span></code> yet for this pair,
+a new one will be created.</li>
+<li>The list of listeners is scanned for the provided port/token pair
+(the BLooper/BHandler pointer will already be translated in
+user-space), and the new flag is or’d to the old field, or a new
+<code class="docutils literal notranslate"><span class="pre">monitor_listener</span></code> is created if necessary - in the latter case,
+the team’s node monitor counter is incremented.</li>
+</ol>
+<p>If it’s called with B_STOP_WATCHING defined, the reverse operation take
+effect, and the <code class="docutils literal notranslate"><span class="pre">monitor</span></code> field is used to see if this monitor don’t
+have any listeners anymore, in which case it will be removed.</p>
+<p>Note the presence of the <code class="docutils literal notranslate"><span class="pre">max_monitors</span></code> - there is no hard limit the
+kernel exposes to userland applications; the listeners are maintained in
+a doubly-linked list.</p>
+<p>If a team is shut down, all listeners from its I/O context will be
+removed - since every listener stores a pointer to its monitor,
+determining the monitors that can be removed because of this operation
+is very cheap.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">notify_listener()</span></code> also only does a hash lookup for the
+device/node pair it got from the file system, and sends out as many
+notifications as specified by the listeners of the monitor that belong
+to that node.</p>
+<p>If a node is deleted from the disk, the corresponding <code class="docutils literal notranslate"><span class="pre">node_monitor</span></code>
+and its listeners will be removed as well, to prevent watching a new
+file that accidently happen to have the same device/node pair (as is
+possible with BFS, for example).</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</div>
+<div class="section" id="differences-between-both-implementations">
+<h2>Differences Between Both Implementations<a class="headerlink" href="#differences-between-both-implementations" title="Permalink to this headline">¶</a></h2>
+<p>Although the aim was to create a completely compatible monitoring
+implementation, there are some notable differences between the two.</p>
+<p>BeOS reserves a certain number of slots for calls to <code class="docutils literal notranslate"><span class="pre">watch_node()</span></code> -
+each call to that function will use one slot, even if you call it twice
+for the same node. OpenBeOS, however, will always use one slot per node
+- you could call <code class="docutils literal notranslate"><span class="pre">watch_node()</span></code> several times, but you would waste
+only one slot.</p>
+<p>While this is an implementational detail, it also causes a change in
+behaviour for applications; in BeOS, applications will get one message
+for every <code class="docutils literal notranslate"><span class="pre">watch_node()</span></code> call, in OpenBeOS, you’ll get only one
+message per node. If an application relies on this strange behaviour of
+the BeOS kernel, it will no longer work correctly.</p>
+<p>The other difference is that OpenBeOS exports its node monitoring
+functionality to kernel modules as well, and provides an extra plain C
+API for them to use.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</div>
+<div class="section" id="and-beyond">
+<h2>And Beyond?<a class="headerlink" href="#and-beyond" title="Permalink to this headline">¶</a></h2>
+<p>The current implementation directly iterates over all listeners and
+sends out notifications as required synchronously in the context of the
+thread that triggered the notification to be sent.</p>
+<p>If a node monitor needs to send out several messages, this could
+theoretically greatly decrease file system performance. To optimize for
+this case, the required data of the notification could be put into a
+queue and be sent by a dedicated worker thread. Since this requires an
+additional copy operation and a reserved address space for this queue,
+this optimization could be more expensive than the current
+implementation, depending on the usage pattern of the node monitoring
+mechanism.</p>
+<p>With BFS, it would be possible to introduce the possibility to
+automatically watch all files in a specified directory. While this would
+be very convenient at application level, it comes with several
+disadvantages:</p>
+<ol class="arabic simple">
+<li>This feature might not be easily accomplishable for many file
+systems; a file system must be able to retrieve a node by ID only -
+it might not be feasible to find out about the parent directory for
+many file systems.</li>
+<li>Although it could potentially safe node monitors, it might cause the
+kernel to send out a lot more messages to the application than it
+needs. With the restriction the kernel imposes to the number of
+watched nodes for a team, the application’s designer might try to be
+much stricter with the number of monitors his application will
+consume.</li>
+</ol>
+<p>While 1.) might be a real show stopper, 2.) is almost invalidated
+because of Tracker’s usage of node monitors; it consumes a monitor for
+every entry it displays, which might be several thousands. Implementing
+this feature would not only greatly speed up maintaining this massive
+need of monitors, and cut down memory usage, but also ease the
+implementation at application level.</p>
+<p>Even 1.) could be solved if the kernel could query a file system if it
+can support this particular feature; it could then automatically monitor
+all files in that directory without adding complexity to the application
+using this feature. Of course, the effort to provide this functionality
+is much larger then - but for applications like Tracker, the complexity
+would be removed from the application without extra cost.</p>
+<p>However, none of the discussed feature extensions have been implemented
+for the currently developed version R1 of OpenBeOS.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../arch/sparc/overview.html">The SPARC port</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../../file_systems/overview.html">Filesystem drivers</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

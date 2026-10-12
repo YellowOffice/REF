@@ -1,0 +1,137 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Filesystem drivers &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The UFS2 filesystem" href="ufs2.html" />
+    <link rel="prev" title="Node Monitoring" href="../kernel/fs/node_monitoring.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Filesystem drivers</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../kernel/fs/node_monitoring.html">Node Monitoring</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="ufs2.html">The UFS2 filesystem</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="filesystem-drivers">
+<h1>Filesystem drivers<a class="headerlink" href="#filesystem-drivers" title="Permalink to this headline">¶</a></h1>
+<p>Filesystem drivers are in src/add-ons/kernel/file_system</p>
+<p>A filesystem usually relies on an underlying block device, but that’s not
+required. For example, NFS is a network filesystem, so it doesn’t need one.</p>
+<div class="section" id="implementation-notes">
+<h2>Implementation notes<a class="headerlink" href="#implementation-notes" title="Permalink to this headline">¶</a></h2>
+<p>Each filesystem driver must define a few structures which act as the
+interface between the VFS and the filesystem implementation. These
+structures contain function pointers, some of which are optional,
+which should point to functions defined by the implementer that
+perform the appropriate filesystem peration as defined by the
+documentation.</p>
+<p>See docs/user/drivers/fs_interface.dox for more detailed documentation
+of this interface.</p>
+<p>It’s important to note that while there may be some similarities in
+the interface with that of other operations systems, one should not
+make any assumptions about the desired behavior based soley on the
+function prototypes defined in fs_interface.h.</p>
+<p>The following is a list of notes calling out some potential mistakes.</p>
+<p># fs_vnode_ops.read_symlink</p>
+<p>Defining this function means that the filesystem driver supports
+symbolic links, and the function that f_vnode_ops.read_symlink points
+to should read the contents of a symlink from the specified node.</p>
+<p>This may seem similar to the posix function readlink(), but it is
+slightly different. Unlike readlink(), which returns the number of
+bytes copied into the output buffer, fs_vnode_ops.read_symlink is
+expected to always return the length of the symlink contents, even if
+the provided buffer is not large enough to contain the entire symlink
+contents.</p>
+</div>
+<div class="section" id="development-tools">
+<h2>Development tools<a class="headerlink" href="#development-tools" title="Permalink to this headline">¶</a></h2>
+<p># fs_shell</p>
+<p>It is not convenient to test a filesystem by reloading its driver into a
+running Haiku system (kernel debugging is often not as easy as userland).
+Moreover, the filesystem interacts with other components of the system
+(file cache, block cache, but also any application reading or writing files).</p>
+<p>For the early development steps, it is much easier to run the filesystem code
+in a more controlled environment. This can be achieved through the use of
+a “filesystem shell”: a simple application that runs the filesystem code, and
+allows performing specific operations through a command line interface.</p>
+<p>Example of fs_shell implementations are available under src/tests/add-ons/kernel/file_systems/
+for the bfs and btrfs filesystems.</p>
+<p>For example, to build the fs_shell for btrfs, use</p>
+<blockquote>
+<div>jam -q “&lt;build&gt;btrfs_shell”</div></blockquote>
+<p>To run it, use</p>
+<blockquote>
+<div>jam run objects/haiku_host/x86_gcc2/release/tests/add-ons/kernel/file_systems/btrfs/btrfs_shell/btrfs_shell [arguments]</div></blockquote>
+<p>You need to pass at least a file or device containing a filesystem image as an
+argument. You need some tool to create one. It is possible to work using an
+actual disk volume (but be careful, it’s risky to use one with useful data in it),
+a file, or a RAM disk, depending on what you are doing.</p>
+<p># userlandfs</p>
+<p>As a second step, it’s possible to use the filesystem as part of a runing
+system, while still running it in userland. This allows use of Debugger,
+memory protection, and in general any kind of userland debugging or tracing
+tool. When the filesystem crashes, it does not bring down the whole system.</p>
+<p>Userlandfs can run the filesystem code using the same interface as the kernel,
+therefore, once everything is working with userlandfs, running the filesystem
+as kernel code is usually quite easy (and provides a performance boost)</p>
+<p># Torture and performance tests</p>
+<p>Once the basic operations are working fine, it is a good idea to perform more
+agressive testing. Examples of scripts doing this are available in
+src/tests/add-ons/kernel/file_systems/ for the fat and ext2 filesystems.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ufs2.html">The UFS2 filesystem</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ufs2.html#commands">Commands</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="befs/resources.html">The Be File System</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../kernel/fs/node_monitoring.html">Node Monitoring</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="ufs2.html">The UFS2 filesystem</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

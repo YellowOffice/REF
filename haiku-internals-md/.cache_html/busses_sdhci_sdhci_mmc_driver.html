@@ -1,0 +1,317 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SDHCI MMC Driver &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="The USB stack" href="../usb/USB_stack_design.html" />
+    <link rel="prev" title="Bluetooth overview" href="../bluetooth/overview.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>SDHCI MMC Driver</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../bluetooth/overview.html">Bluetooth overview</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../usb/USB_stack_design.html">The USB stack</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="sdhci-mmc-driver">
+<h1>SDHCI MMC Driver<a class="headerlink" href="#sdhci-mmc-driver" title="Permalink to this headline">¶</a></h1>
+<p>This driver project is a part of GSoC’18 and is aimed at providing
+support for PCI devices with class 8 and subclass 5 over x86
+architecture. This document will make you familiar with the <a class="reference external" href="https://review.haiku-os.org/#/c/haiku/+/318/">code
+produced during GSoC</a>,
+loading and testing the driver(including hardware emulation), insight
+into the code and future tasks.</p>
+<p>For detailed explanations about the project, you can refer the <a class="reference external" href="https://www.haiku-os.org/blog/krish_iyer">weekly
+reports</a> and comment issues
+if any. For this project we have referred <a class="reference external" href="https://www.sdcard.org/downloads/pls/pdf/index.php?p=PartA2_SD_Host_Controller_Simplified_Specification_Ver1.00.jpg&amp;f=PartA2_SD_Host_Controller_Simplified_Specification_Ver1.00.pdf&amp;e=EN_A2100">SD Host Controller Spec
+Version
+1.00</a>
+and <a class="reference external" href="https://www.sdcard.org/downloads/pls/pdf/index.php?p=Part1_Physical_Layer_Simplified_Specification_Ver1.10.jpg&amp;f=Part1_Physical_Layer_Simplified_Specification_Ver1.10.pdf&amp;e=EN_P1110">Physical Layer Spec Version
+1.10</a>.</p>
+<div class="section" id="loading-and-testing-the-driver">
+<h2>Loading and testing the driver<a class="headerlink" href="#loading-and-testing-the-driver" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="emulating-the-hardware">
+<h3>Emulating the hardware<a class="headerlink" href="#emulating-the-hardware" title="Permalink to this headline">¶</a></h3>
+<p>We will emulate a SDHC device using qemu as all system may not have the
+device. These days systems provide transfer to SD/ MMC card over USB.
+The document will not instruct you on how to build haiku but you can
+refer the link to <a class="reference external" href="https://www.haiku-os.org/guides/building/">compile and build the haiku
+images</a> or the <a class="reference external" href="https://www.haiku-os.org/blog/krish_iyer/2018-05-06_gsoc_2018_sdhci_mmc_driver_week_1_and_2/">week #1
+and
+#2</a>
+project report will also work.</p>
+<p>After building the image, we will emulate the hardware and host haiku on
+top of that.</p>
+<div class="section" id="emulation">
+<h4>Emulation<a class="headerlink" href="#emulation" title="Permalink to this headline">¶</a></h4>
+<p>For emulating a sdhci-pci device</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qemu</span><span class="o">-</span><span class="n">img</span> <span class="n">create</span> <span class="n">sd</span><span class="o">-</span><span class="n">card</span><span class="o">.</span><span class="n">img</span> <span class="mi">32</span><span class="n">M</span>
+<span class="n">qemu</span><span class="o">-</span><span class="n">system</span><span class="o">-</span><span class="n">x86_64</span> <span class="o">-</span><span class="n">drive</span> <span class="n">index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">file</span><span class="o">=</span><span class="n">haiku</span><span class="o">-</span><span class="n">nightly</span><span class="o">-</span><span class="n">anyboot</span><span class="o">.</span><span class="n">iso</span><span class="p">,</span><span class="nb">format</span><span class="o">=</span><span class="n">raw</span> \
+    <span class="o">-</span><span class="n">device</span> <span class="n">sdhci</span><span class="o">-</span><span class="n">pci</span> <span class="o">-</span><span class="n">device</span> <span class="n">sd</span><span class="o">-</span><span class="n">card</span><span class="p">,</span><span class="n">drive</span><span class="o">=</span><span class="n">mydrive</span> \
+    <span class="o">-</span><span class="n">drive</span> <span class="k">if</span><span class="o">=</span><span class="n">sd</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">file</span><span class="o">=</span><span class="n">sd</span><span class="o">-</span><span class="n">card</span><span class="o">.</span><span class="n">img</span><span class="p">,</span><span class="nb">format</span><span class="o">=</span><span class="n">raw</span><span class="p">,</span><span class="nb">id</span><span class="o">=</span><span class="n">mydrive</span>
+    <span class="o">-</span><span class="n">m</span> <span class="mi">512</span><span class="n">M</span> <span class="o">-</span><span class="n">enable</span><span class="o">-</span><span class="n">kvm</span> <span class="o">-</span><span class="n">usbdevice</span> <span class="n">tablet</span> <span class="o">-</span><span class="n">machine</span> <span class="n">q35</span>
+</pre></div>
+</div>
+<p>This does the following: - Create an SD card image of 32MB - Run qemu
+with a bootable image in an IDE disk, and an SDHCI bus with an SD card
+in it - Have enough memory to boot Haiku, use KVM mode for speed, and a
+tablet for ease of use - Use the Q35 chipset so the mouse and SDHCI
+controllers don’t share an interrupt (not strictly required, but it
+avoids calls to the SDHCI interrupt handler on every mouse move).</p>
+<p>Tracing of SD operations can also be added to see how qemu is
+interpreting our commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">trace</span> <span class="n">sdhci</span><span class="o">*</span> <span class="o">-</span><span class="n">trace</span> <span class="n">sdbus</span><span class="o">*</span> <span class="o">-</span><span class="n">trace</span> <span class="n">sdcard</span><span class="o">*</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="testing-and-loading-the-driver">
+<h3>Testing and loading the driver<a class="headerlink" href="#testing-and-loading-the-driver" title="Permalink to this headline">¶</a></h3>
+<p>The code is merged and part of the default Haiku build.</p>
+</div>
+</div>
+<div class="section" id="insight-into-the-code-and-future-tasks">
+<h2>Insight into the code and future tasks<a class="headerlink" href="#insight-into-the-code-and-future-tasks" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="bus-bus-manager-and-drivers">
+<h3>Bus, bus manager, and drivers<a class="headerlink" href="#bus-bus-manager-and-drivers" title="Permalink to this headline">¶</a></h3>
+<p>The MMC stack is a device manager based “new style” driver. This
+requires splitting the driver in different parts but allow easy reuse of
+each part (for example to support eMMC or SDIO with a large part of the
+code in common with plain SD/MMC).</p>
+<div class="section" id="mmc-bus-drivers-src-add-ons-kernel-busses-mmc">
+<h4>MMC Bus drivers (src/add-ons/kernel/busses/mmc)<a class="headerlink" href="#mmc-bus-drivers-src-add-ons-kernel-busses-mmc" title="Permalink to this headline">¶</a></h4>
+<p>The bus driver provides the low level aspects: interrupts management,
+DMA transfer, accessing the hardware registers. It acts as a platform
+abstraction layer so that the bus manager and disk driver can be written
+independently of the underlying hardare.</p>
+<p>Currently there is a single implementation for SDHCI (MMC bus over PCI).
+Later on, other drivers will be added for other ways to access the MMC
+bus (for example on ARM devices where it does not live on a PCI bus, and
+may have a different register layout).</p>
+<p>For this reason, the bus drivers should only do the most low-level
+things, trying to keep as much code as possible in the upper layers.</p>
+<p>One slightly confusing thing about SDHCI is that it allows a single PCI
+device to implement multiple separate MMC busses (each of which could
+have multiple devices attached). For this reason there is an SDHCI
+“device” that attaches to the PCI device node for the controller, and
+then publishes multiple device nodes for each available bus. The nodes
+then work independently of each other.</p>
+</div>
+<div class="section" id="the-bus-manager-src-add-ons-kernel-bus-managers-mmc">
+<h4>The Bus Manager (src/add-ons/kernel/bus_managers/mmc)<a class="headerlink" href="#the-bus-manager-src-add-ons-kernel-bus-managers-mmc" title="Permalink to this headline">¶</a></h4>
+<p>The bus manager is responsible for enumerating devices on the bus,
+assigning them addresses, and keeping track of which card is active at
+any given time.</p>
+<p>Essentially it has everything that requires collaboration between
+multiple MMC devices, as well as things that are not specific to a
+device type (common to SDIO, SD and MMC cards, for example)</p>
+</div>
+<div class="section" id="disk-driver-src-add-ons-kernel-drivers-disk-mmc">
+<h4>Disk Driver (src/add-ons/kernel/drivers/disk/mmc)<a class="headerlink" href="#disk-driver-src-add-ons-kernel-drivers-disk-mmc" title="Permalink to this headline">¶</a></h4>
+<p>This is a mass storage driver for MMC, SD and SDHC cards. Currently only
+SD and SDHC are tested, MMC and eMMC will have to be added (they are
+similar but there are some differences).</p>
+</div>
+<div class="section" id="wiring-the-driver-in-the-device-manager-src-system-kernel-device-manager-device-manager-cpp">
+<h4>Wiring the driver in the device manager (src/system/kernel/device_manager/device_manager.cpp)<a class="headerlink" href="#wiring-the-driver-in-the-device-manager-src-system-kernel-device-manager-device-manager-cpp" title="Permalink to this headline">¶</a></h4>
+<p>(note: possibly not accurate documentation, I did not check how things
+in the device manager are actually implemented, but this is my
+understanding of it).</p>
+<p>The device manager attempts to implement lazy, on-demand scanning of the
+devices. The idea is to speed up booting by not spending a lot of time
+scanning everything first, and only scanning small parts of the device
+tree as they are needed.</p>
+<p>The trigger is accesses to the devfs. For example, when an application
+opens /dev/disk, the device manager will start looking for disks so it
+can populate it. This means the device manager needs to know which
+branches of the device tree to explore. Currently this knowledge is
+hardcoded into the device tree sourcecode, and there’s a TODO item about
+moving that knowledge to drivers instead. But it’s tricky, since the
+whole point is to avoid loading all the drivers.</p>
+<p>Anyway, currently, the device manager is hardcoded to look for mass
+storage devices under SDHCI busses, both standard ones and some
+non-standard ones (for example, Ricoh provides SDHCI implenentations
+that are conform to the spec, except they don’t have the right device
+type in the PCI registers).</p>
+</div>
+</div>
+<div class="section" id="insight-into-the-code">
+<h3>Insight into the code<a class="headerlink" href="#insight-into-the-code" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="mmc-bus-management-overview">
+<h4>MMC Bus management overview<a class="headerlink" href="#mmc-bus-management-overview" title="Permalink to this headline">¶</a></h4>
+<p>The device tree for MMC support looks like this:</p>
+<ul class="simple">
+<li>PCI bus manager<ul>
+<li>(other PCI devices)</li>
+<li>SDHCI controller<ul>
+<li>SDHCI bus<ul>
+<li>MMC bus manager<ul>
+<li>MMC device<ul>
+<li>mmc_disk device</li>
+</ul>
+</li>
+<li>MMC device<ul>
+<li>(other SDIO driver)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>MMC bus manager (second MMC bus)<ul>
+<li>MMC device<ul>
+<li>mmc_disk device</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>At the first level, the PCI bus manager publishes a device node for each
+device found. One of them is our SDHCI controller, identified either by
+the PCI device class and subclass, or for not completely SDHCI
+compatible device, by the device and vendor IDs.</p>
+<p>The SDHCI bus driver attaches to this device and publishes his own node.
+It then scans the device and publishes an MMC bus node for each slot
+(there may be multiple SD slots attached to a single PCI controller).</p>
+<p>The MMC bus manager then attach to each of these slots, and send the
+appropriate commands for enumerating the SD cards (there may be multiple
+cards in a “slot”), and publishes a device node for each of them.
+Finally, the mmc_disk driver can bind itself to one of these device
+nodes, and publish the corresponding disk node, which is also be made
+available in /dev/disk/mmc.</p>
+<p>Currently the mmc bus does not publish anything in the devfs, but this
+could be added if sending raw SD/MMC commands to SD cards from userland
+is considered desirable.</p>
+</div>
+<div class="section" id="sdhci-driver">
+<h4>SDHCI driver<a class="headerlink" href="#sdhci-driver" title="Permalink to this headline">¶</a></h4>
+<p>The SDHCI driver is the lowest level of the MMC stack. It provides
+abstraction of the SDHCI device. Later on, different way to access an SD
+bus may be added, for example for ARM devices which decided to use a
+different register interface.</p>
+<p>The entry point is as usual <strong>supports_device()</strong>. This method is called
+only for devices which may be SDHCI controllers, thanks to filtering
+done in the device manager to probe only the relevant devices. The
+probing is done on-demand, currently when the system is enumerating
+/dev/disk in the devfs. Later on, when we have SDIO support, probing
+will also be triggered in other cases.</p>
+<p>The function identifies the device by checking the class and subclass,
+as well as a limited set of hardcoded PCI device and vendor IDs for
+devices that do not use the assigned subclass.</p>
+<p>Once a compatible device is found, <strong>register_child_devices()</strong> is used
+to publish device nodes for each slot to be controlled by the mmc bus
+manager. The registers for each device are mapped into virtual memory,
+using the information from the PCI bar registers. <strong>struct registers</strong>
+is defined so that it matches the register layout, and provide a little
+abstraction to raw register access.</p>
+<p>An SdhciBus object is created to manage each of these busses at the
+SDHCI level. It will be responsible for executing SD commands on that
+bus, and dealing with the resulting interrupts.</p>
+</div>
+<div class="section" id="the-bus-manager">
+<h4>The Bus Manager<a class="headerlink" href="#the-bus-manager" title="Permalink to this headline">¶</a></h4>
+<p>The MMC bus manager manages the MMC bus (duh). Its tasks are:</p>
+<ul class="simple">
+<li>enumerating SD cards on the bus</li>
+<li>assigning RCAs to the cards for identifying them when sending
+commands</li>
+<li>setting the bus clock speed according to what the cards can handle</li>
+<li>remember which SD card is currently active (CMD7)</li>
+<li>manage cards state</li>
+<li>publish device nodes for each card</li>
+</ul>
+</div>
+<div class="section" id="disk-driver">
+<h4>Disk Driver<a class="headerlink" href="#disk-driver" title="Permalink to this headline">¶</a></h4>
+<p>The disk driver is attached to devices implementing SDSC or SDHC/SDXC
+commands. There will be other drivers for non-storage (SDIO) cards.</p>
+<p>To help with this, the MMC bus manager provides the device with the
+information it gathered while initializing the device. According to the
+commands recognized by the card during the initialization sequence, it’s
+possible to know if it’s SDSC, SDHC/SDXC, or something else (SDIO,
+legacy MMC, etc).</p>
+<p>The disk driver publishes devfs entries in /dev/disk/mmc and implements
+the usual interface for disk devices. From this point on, the device can
+be used just like any other mass storage device.</p>
+</div>
+<div class="section" id="getting-everything-loaded">
+<h4>Getting everything loaded<a class="headerlink" href="#getting-everything-loaded" title="Permalink to this headline">¶</a></h4>
+<p>The device manager is not completely implemented yet. As a result, some
+decisions about which drivers to load are hardcoded in
+device_manager.cpp.</p>
+<p>It has been adjusted to handover SDHCI devices to the MMC bus. Whenever
+a “disk” device is requested, the MMC busses are searched, which results
+in loading the SDHCI driver and probing for SD cards. When we get
+support for other types of SDIO devices, we will need to adjust the
+device manager to probe the SDHCI bus when these type of devices are
+requested, too.</p>
+</div>
+</div>
+<div class="section" id="tasks-to-be-completed">
+<h3>Tasks to be completed<a class="headerlink" href="#tasks-to-be-completed" title="Permalink to this headline">¶</a></h3>
+<p>The SDHCI driver is able to send and receive commands. However it does
+not handle card insertion and removal interrupts yet, so the card must
+be already inserted when the driver is loaded.</p>
+<p>The mmc_disk driver is complete and working, but was not tested for MMC
+and eMMC devices. Some changes may be needed.</p>
+<p>There is also work to be done for better performance: making sure we
+switch to the high-speed clock when an SD card supports it, and use the
+4-bit data transfer mode instead of the default 1-bit if possible.</p>
+<p>Drivers for SDIO devices should also be added. The mmc_bus and SDHCI
+drivers have been tested only with one card on the bus at a time (for
+lack of hardware allowing more complex setups).</p>
+<p>If you find it difficult to understand the driver development and it’s
+functioning and role, please refer
+<em>docs/develop/kernel/device_manager_introduction.html</em></p>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../bluetooth/overview.html">Bluetooth overview</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../usb/USB_stack_design.html">The USB stack</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

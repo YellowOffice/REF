@@ -1,0 +1,161 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>HaikuDepot and Server Interactions &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="The MIDI Kit" href="../../midi/index.html" />
+    <link rel="prev" title="HaikuPorts build-packages repository" href="../../build/repositories/README.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>HaikuDepot and Server Interactions</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../../build/repositories/README.html">HaikuPorts build-packages repository</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../../midi/index.html">The MIDI Kit</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="haikudepot-and-server-interactions">
+<h1>HaikuDepot and Server Interactions<a class="headerlink" href="#haikudepot-and-server-interactions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document aims to outline the general approach taken within the
+HaikuDepot application with regard to coordinating processes that relate
+to fetching and consuming data from remote systems.</p>
+<p>There are two main sources of remote data that are downloaded and
+consumed from network sources into the HaikuDepot desktop application;</p>
+<ul class="simple">
+<li>Repository HPKR data from a Haiku mirror such as “HaikuPorts”</li>
+<li>Meta-data related to packages from
+<a class="reference external" href="http://depot.haiku-os.org">HaikuDepotServer</a> (HDS) such as icons,
+localizations, ratings and so on.</li>
+</ul>
+</div>
+<div class="section" id="process-processnode-and-coordinator">
+<h2>Process, ProcessNode and Coordinator<a class="headerlink" href="#process-processnode-and-coordinator" title="Permalink to this headline">¶</a></h2>
+<p>A <em>Process</em> (root class <code class="docutils literal notranslate"><span class="pre">AbstractProcess</span></code>) is a class that takes
+responsibility for some aspect of pulling material down from a network
+source and processing it.</p>
+<p>A <em>ProcessNode</em> is a holder for a Process, but also takes responsibility
+for the following;</p>
+<ul class="simple">
+<li>Maintaining the relationship between the Processes. For example, if
+Process A needs to complete before Process B then the ProcessNode
+would record this fact. It does this by storing <em>predecessor</em> and
+<em>successor</em> ProcessNodes.</li>
+<li>Starting the held Process in a newly spawned thread.</li>
+<li>Stopping the held Process.</li>
+</ul>
+<p>A <em>Coordinator</em> holds a list of ProcessNodes. It will start, stop and
+cancel nodes as necessary such that, in an ideal case, the various
+ProcessNodes are completed in the correct order.</p>
+<p>The <em>ProcessCoordinatorFactory</em> is able to create Coordinators.</p>
+</div>
+<div class="section" id="bulk-load-processes">
+<h2>Bulk Load Processes<a class="headerlink" href="#bulk-load-processes" title="Permalink to this headline">¶</a></h2>
+<p>The following diagram shows the logical dependencies of the various
+Processes that are involved in refreshing the HPKR data from remote
+repositories and then loading data from the HDS system.</p>
+<div class="figure" id="id1">
+<img alt="Process Dependencies" src="../../_images/processes.svg" /><p class="caption"><span class="caption-text">Process Dependencies</span></p>
+</div>
+<p>For example, the <code class="docutils literal notranslate"><span class="pre">ServerRepositoryDataUpdateProcess</span></code> must wait until
+the <code class="docutils literal notranslate"><span class="pre">LocalRepositoryUpdateProcess</span></code> has completed before it is able to
+be started. It is the reponsibility of the Coordinator to ensure that
+this sequencing is enforced. There are many instances of
+<code class="docutils literal notranslate"><span class="pre">ServerPkgDataUpdateProcess</span></code> shown because there will be one launched
+for each of the Repositories for which data will be downloaded;
+“HaikuDepot” etc…</p>
+</div>
+<div class="section" id="process-processnode-coordinator">
+<h2>Process / ProcessNode / Coordinator<a class="headerlink" href="#process-processnode-coordinator" title="Permalink to this headline">¶</a></h2>
+<p>The following diagram shows the relationship and interplay between the
+various objects that are involved in running a larger task. Only
+fictional Processes are shown to keep the diagram tidy. See above for
+the actual Processes.</p>
+<div class="figure" id="id2">
+<img alt="Process Relationship and Interplay" src="../../_images/process-interplay.svg" /><p class="caption"><span class="caption-text">Process Relationship and Interplay</span></p>
+</div>
+<p>Dotted lines show associations between elements and red lines show
+interaction or data-flow. Green arrows here demonstratively show some
+dependency; Process C cannot start until A and B are completed.</p>
+<p>The MainWindow owns the Coordinator for the life-span of undertaking
+some larger task.</p>
+<p>Each Process is coupled with a ProcessNode and then the Coordinator has
+a list of the ProcessNodes-s. The Processes are generally writing to the
+local disk system (often with compressed files) to cache data (see
+<code class="docutils literal notranslate"><span class="pre">~/config/cache/HaikuDepot</span></code>) and also relay data into the <code class="docutils literal notranslate"><span class="pre">Model</span></code>
+object that maintains state for the HaikuDepot desktop application.</p>
+<p>The Processes communicate when they have finished to the Coordinator and
+it is at these events that the Coordinator is able to introspect the
+state of the Processes in order to know what to do next.</p>
+<p>The Coordinator also communicates with MainWindow. It communicates with
+the MainWindow in order to signal changes or progress in the overall
+larger task. The MainWindow also uses these events to discover when the
+Coordinator has completely finished.</p>
+</div>
+<div class="section" id="failure">
+<h2>Failure<a class="headerlink" href="#failure" title="Permalink to this headline">¶</a></h2>
+<p>A Process may fail or be stopped. If a Process fails or is stopped then
+successor Processes, or those that would have run after the failed
+process, are stopped so that they will not run.</p>
+<p>The Coordinator will still try to complete any other Processes that
+could still run or are running already.</p>
+<p>Upon the Coordinator completing, the Coordinator will signal to the
+MainWindow client the change in state and then the MainWindow will be
+able to identify that the Coordinator has completed, but that something
+has gone wrong along the way.</p>
+</div>
+<div class="section" id="concurrency">
+<h2>Concurrency<a class="headerlink" href="#concurrency" title="Permalink to this headline">¶</a></h2>
+<p>It is important to note that Processes may run concurrently. The
+Processes’ are modelled by the Coordinator as a list rather than a tree.
+The dependencies are likely to form a tree or web of Processes that
+dictates the order of execution, but it is also quite possible to have
+multiple non-intersecting trees or webs such that Processes will execute
+independently.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../../build/repositories/README.html">HaikuPorts build-packages repository</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../../midi/index.html">The MIDI Kit</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

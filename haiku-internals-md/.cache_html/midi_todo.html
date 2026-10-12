@@ -1,0 +1,125 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Midi Kit TO DO List &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Haiku Network Stack Architecture" href="../net/NetworkStackOverview.html" />
+    <link rel="prev" title="Testing the Midi Kit" href="testing.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Midi Kit TO DO List</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="testing.html">Testing the Midi Kit</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../net/NetworkStackOverview.html">Haiku Network Stack Architecture</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="midi-kit-to-do-list">
+<h1>Midi Kit TO DO List<a class="headerlink" href="#midi-kit-to-do-list" title="Permalink to this headline">¶</a></h1>
+<p><strong>Communicating with device drivers.</strong> The midi_server already has a
+pretty good parser that turns an incoming stream of bytes into MIDI
+messages. It uses read() to read a single byte at a time. However, the
+midi_driver.h file lists a number of ioctl() opcodes that we are
+currently not using. Should we? In addition, do we really need to spawn
+a new thread for each device? The R5 midi_server doesn’t appear to do
+this. An optional feature is to implement “running status” for MIDI OUT
+ports (i.e. when writing to the device driver). This would be pretty
+simple to add.</p>
+<p><strong>BMidiStore is slow.</strong> Importing a Standard MIDI File of a few hundred
+kilobytes takes too long for my taste. The one from R5 is at least twice
+as fast. It is important to speed this up since BMidiStore is used by
+BMidiSynthFile to play MIDI files. We don’t want games to slow down too
+much.</p>
+<p><strong>MPU401 kernel module.</strong> Greg Crain did a great job of writing this
+module. Unfortunately, we only know how the v1 interface works; v2 is
+not documented. What’s worse, most Be R5 drivers use v2. Currently, the
+module returns B_ERROR when a device is opened with v2. Is this going to
+be a problem for us? It depends on whether we will be able to use the
+closed-source Be drivers with our own kernel — if not, then we can
+simply ignore v2.</p>
+<p><strong>Watching /dev/midi for changes.</strong> Whenever a new device appears in
+/dev/midi, the midi_server must create and publish a new MidiProducer
+and MidiConsumer for that device. When a device disappears, its
+endpoints must be removed again. Philippe Houdoin suggested we use the
+device_watcher for this, but R5 doesn’t appear to do it that way. Either
+it uses node monitoring or doesn’t do this at all. Our midi_server
+already has a DeviceWatcher class, but it only examines the entries from
+/dev/midi when the server starts, not while the server is running.</p>
+<p><strong>BMidiSynthFile::Fade()</strong> Right now this simply calls Stop(). We could
+set a flag in BMidiStore (which handles our playback), which would then
+slowly reduce the volume and abort the loop after a few seconds. But we
+need to have the softsynth in order to tune this properly.</p>
+<p><strong>Must be_synth be deleted when the app quits?</strong> I have not found a word
+about this, nor a way to test what happens in R5. For example, the
+BMidiSynth constructor creates a BSynth object (if none already
+existed), but we cannot destroy be_synth from the BMidiSynth destructor
+because it may still be used in other places in the code (BSynth is not
+refcounted). We could add the following code to libmidi.so to clean up
+properly, but I don’t know if it is really necessary:</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">namespace</span> <span class="n">BPrivate</span>
+<span class="p">{</span>
+    <span class="n">static</span> <span class="n">struct</span> <span class="n">BSynthKiller</span>
+    <span class="p">{</span>
+        <span class="o">~</span><span class="n">BSynthKiller</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">delete</span> <span class="n">be_synth</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">synth_killer</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>midiparser kernel module.</strong> midi_driver.h (from the Sonic Vibes driver
+sample code) contains the definition of a “midiparser” kernel module.
+This is a very simple module that makes it easy to recognize where MIDI
+messages begin and end, but apparently doesn’t tell you what they mean.
+In R5, this module lives in /boot/beos/system/add-ons/kernel/media. Does
+anyone use this module? Is it necessary for us to provide it?
+Personally, I’d say foggeddaboutit.</p>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="testing.html">Testing the Midi Kit</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../net/NetworkStackOverview.html">Haiku Network Stack Architecture</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,123 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>HaikuPorts build-packages repository &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="HaikuDepot and Server Interactions" href="../../apps/haikudepot/server.html" />
+    <link rel="prev" title="Building Haiku with Jam" href="../jam.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>HaikuPorts build-packages repository</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../jam.html">Building Haiku with Jam</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../../apps/haikudepot/server.html">HaikuDepot and Server Interactions</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="haikuports-build-packages-repository">
+<h1>HaikuPorts build-packages repository<a class="headerlink" href="#haikuports-build-packages-repository" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">build/jam/repositories/HaikuPorts</span></code> directory contains
+RemotePackageRepository files which detail packages and repositories
+leveraged during Haiku’s build process.</p>
+<blockquote>
+<div>Warning: The URL packages are obtained from are determined by the
+sha256sum of the repository file.</div></blockquote>
+<div class="section" id="updating">
+<h2>Updating<a class="headerlink" href="#updating" title="Permalink to this headline">¶</a></h2>
+<p>Each RemotePackageRepository jam file in this directory is processed by
+src/tools/hardlink_packages.py on the HaikuPorts package server.</p>
+<ol class="arabic simple">
+<li>Latest RemotePackageRepository jam file in git is downloaded on
+package server.</li>
+<li>Packages are added to HaikuPorts by automatic or manual means.</li>
+<li>hardlink_packages is provided all the relevant directories and
+RemotePackageRepository file</li>
+<li>hardlink_packages performs additional modification of the
+RemotePackageRepository and creates build repositories
+(<a class="reference external" href="https://eu.hpkg.haiku-os.org/haikuports/master/build-packages/">https://eu.hpkg.haiku-os.org/haikuports/master/build-packages/</a>)</li>
+<li>The modified RemotePackageRepository file is copied back to the
+developers system and checked in to git.</li>
+</ol>
+</div>
+<div class="section" id="container-process">
+<h2>Container Process<a class="headerlink" href="#container-process" title="Permalink to this headline">¶</a></h2>
+<p>Here is the fastest way to update this as of today. Improvements are
+needed. Replace (ARCH) with architecture, (USER) with your non-root
+user.</p>
+</div>
+<div class="section" id="prepare-the-build-packages-repository">
+<h2>Prepare the build-packages repository<a class="headerlink" href="#prepare-the-build-packages-repository" title="Permalink to this headline">¶</a></h2>
+<p>as root on limerick.ams3.haiku-os.org…</p>
+<ol class="arabic simple">
+<li>wget
+<a class="reference external" href="https://git.haiku-os.org/haiku/plain/build/jam/repositories/HaikuPorts/(ARCH">https://git.haiku-os.org/haiku/plain/build/jam/repositories/HaikuPorts/(ARCH</a>)
+-O /var/lib/docker/volumes/ci_data_master_(ARCH)/_data/(ARCH)</li>
+<li>Enter the buildmaster container: docker exec -it $(docker ps | grep
+ci_buildmaster_master_(ARCH) | awk ‘{ print $1 }’) /bin/bash -l</li>
+<li>apt update; apt install -y vim python3 python3-pkg-resources</li>
+<li>edit the repository define, add the needed packages, _devel
+packages, and add base package to source section.</li>
+<li>ln -s /var/buildmaster/package_tools/package_repo
+/usr/bin/package_repo</li>
+<li>export
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/var/buildmaster/package_tools</li>
+<li>./package_tools/hardlink_packages.py (ARCH) ./(ARCH)
+/var/packages/repository/master/(ARCH)/current/packages/
+/var/packages/build-packages/master/</li>
+<li>exit; cp /var/lib/docker/volumes/ci_data_master_(ARCH)/_data/(ARCH)
+/home/(USER)/(ARCH); chown (USER) /home/(USER)/(ARCH);</li>
+</ol>
+</div>
+<div class="section" id="pull-the-repostory-file-and-commit-it">
+<h2>Pull the repostory file and commit it<a class="headerlink" href="#pull-the-repostory-file-and-commit-it" title="Permalink to this headline">¶</a></h2>
+<p>From your local system…</p>
+<ol class="arabic simple">
+<li>scp -P2222 (USER)&#64;limerick.ams3.haiku-os.org:./(ARCH) ./(ARCH)</li>
+<li>commit the updated repostory define <em>without modifying it</em> in any way</li>
+</ol>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../jam.html">Building Haiku with Jam</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../../apps/haikudepot/server.html">HaikuDepot and Server Interactions</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,102 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Notes on long double support &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="The ARM port" href="arm/overview.html" />
+    <link rel="prev" title="Swap file" href="../vm/swap_file_support.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Notes on long double support</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../vm/swap_file_support.html">Swap file</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="arm/overview.html">The ARM port</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="notes-on-long-double-support">
+<h1>Notes on long double support<a class="headerlink" href="#notes-on-long-double-support" title="Permalink to this headline">¶</a></h1>
+<p>The “long double” type is different on each architecture. Depending on
+the available hardware and ABI conventions, performance compromises,
+etc, there may be many implementations of it. Here is a summary for our
+convenience.</p>
+<div class="section" id="bit-ieee">
+<h2>128-bit IEEE<a class="headerlink" href="#bit-ieee" title="Permalink to this headline">¶</a></h2>
+<p>Platforms: Sparc, ARM64, RISC-V</p>
+<p>This is the standard long double type from IEEE754. It has 1 sign bit,
+15 exponent bit, and 112 fractional part bits. It is the natural
+extension of the 64bit double.</p>
+<p>Sparc specifies this type in their ABI but no implementation actually
+has the instructions, they instead trigger a trap which would software
+emulate them. However, gcc short circuits this by default and calls C
+library support functions directly.</p>
+</div>
+<div class="section" id="bit-ieee-1">
+<span id="id1"></span><h2>64-bit IEEE<a class="headerlink" href="#bit-ieee-1" title="Permalink to this headline">¶</a></h2>
+<p>Platforms: ARM</p>
+<p>This is the same representation as plain “double”. ARM uses this for
+simplicity.</p>
+</div>
+<div class="section" id="bit">
+<h2>80-bit<a class="headerlink" href="#bit" title="Permalink to this headline">¶</a></h2>
+<p>Platform: x86, x86_64, m68k</p>
+<p>This intermediate format is used by x86 CPUs internally. It may end up
+being faster than plain double there. It consists of a 64bit fractional
+part, 15 exponent bits, and 1 sign bit. This is convenient because the
+fractional part is a relatively easy to handle 64bit number.</p>
+<p>m68k uses a similar format, but padded to 96 bits (the extra 16 bits are
+unused).</p>
+</div>
+<div class="section" id="double-double">
+<h2>double double<a class="headerlink" href="#double-double" title="Permalink to this headline">¶</a></h2>
+<p>Platforms: PowerPC?</p>
+<p>This is also a 128bit type, but the representation is just two 64bit
+doubles. The value is the sum of the two halves. This format allows
+faster emulation than a “true” 128bit long double, and the precision is
+almost as good.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../vm/swap_file_support.html">Swap file</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="arm/overview.html">The ARM port</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

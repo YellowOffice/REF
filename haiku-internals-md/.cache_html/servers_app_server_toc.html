@@ -1,0 +1,631 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Application Server &#8212; Haiku internals  documentation</title>
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="AppServer class" href="AppServer.html" />
+    <link rel="prev" title="Package Management Ideas" href="../../packages/OldIdeas.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Haiku internals  documentation</span></a></h1>
+        <h2 class="heading"><span>Application Server</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../../packages/OldIdeas.html">Package Management Ideas</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="AppServer.html">AppServer class</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="application-server">
+<h1>Application Server<a class="headerlink" href="#application-server" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="class-descriptions">
+<h2>Class Descriptions<a class="headerlink" href="#class-descriptions" title="Permalink to this headline">¶</a></h2>
+<p>Application Management</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="AppServer.html">AppServer class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#member-functions">Member Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#global-functions">Global Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#appserver-void">AppServer(void)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#id1">~AppServer(void)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#void-mainloop-void">void MainLoop(void)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#void-dispatchmessage-int32-code-int8-buffer">void DispatchMessage(int32 code, int8 *buffer)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#create-app">CREATE_APP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#delete-app">DELETE_APP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#get-screen-mode">GET_SCREEN_MODE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#b-quit-requested">B_QUIT_REQUESTED</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#set-decorator">SET_DECORATOR</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#void-run-void">void Run(void)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#bool-loaddecorator-const-char-path">bool LoadDecorator(const char *path)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#static-int32-picasso-void-data">static int32 Picasso(void *data)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#static-int32-poller-void-data">static int32 Poller(void *data)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#decorator-instantiate-decorator-layer-owner-uint32-wflags-uint32-wlook">Decorator * instantiate_decorator(Layer *owner, uint32 wflags, uint32 wlook)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#void-broadcast-int32-code">void Broadcast(int32 code)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="AppServer.html#void-handlekeymessage-int32-code-int8-buffer">void HandleKeyMessage(int32 code, int8 *buffer)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#b-key-down">B_KEY_DOWN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#b-key-up">B_KEY_UP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#b-unmapped-key-down">B_UNMAPPED_KEY_DOWN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#b-unmapped-key-up">B_UNMAPPED_KEY_UP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AppServer.html#b-modifiers-changed">B_MODIFIERS_CHANGED</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ServerApp.html">ServerApp class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ServerApp.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ServerApp.html#serverapp-port-id-sendport-port-id-rcvport-const-char-sig-thread-id-thread-bapp">ServerApp(port_id sendport, port_id rcvport, const char *sig, thread_id thread_bapp)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerApp.html#serverapp-void">~ServerApp(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerApp.html#bool-run-void">bool Run(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerApp.html#static-int32-monitorapp-void-data">static int32 MonitorApp(void *data)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerApp.html#bool-isactive-void">bool IsActive(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerApp.html#void-pingtarget-void">void PingTarget(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerApp.html#void-dispatchmessage-int32-code-int8-buffer">void DispatchMessage(int32 code, int8 *buffer)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ServerApp.html#create-window">CREATE_WINDOW</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ServerApp.html#delete-app">DELETE_APP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ServerApp.html#set-cursor-data">SET_CURSOR_DATA</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ServerApp.html#set-cursor-bcursor">SET_CURSOR_BCURSOR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ServerApp.html#b-quit-requested">B_QUIT_REQUESTED</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ServerApp.html#update-decorator">UPDATE_DECORATOR</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ServerApp.html#void-windowbroadcast-int32-code">void WindowBroadcast(int32 code)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerApp.html#void-lock-void-void-unlock-void-bool-islocked-void">void Lock(void), void Unlock(void), bool IsLocked(void)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="SharedObject.html">SharedObject class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="SharedObject.html#member-functions">Member Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="TokenHandler.html">TokenHandler class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="TokenHandler.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="TokenHandler.html#tokenhandler-void">TokenHandler(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TokenHandler.html#id1">~TokenHandler(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TokenHandler.html#int32-gettoken-void">int32 GetToken(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TokenHandler.html#void-reset-void">void Reset(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TokenHandler.html#void-excludevalue-int32-value">void ExcludeValue(int32 value)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TokenHandler.html#void-resetexcludes-void">void ResetExcludes(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TokenHandler.html#bool-isexclude-int32-value">bool IsExclude(int32 value)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DebugTools.html">Debug Utility functions</a></li>
+</ul>
+</div>
+<p>Graphics Management</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="BitmapManager.html">BitmapManager class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="BitmapManager.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="BitmapManager.html#bitmapmanager-void">BitmapManager(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BitmapManager.html#id1">~BitmapManager(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BitmapManager.html#serverbitmap-createbitmap-brect-bounds-color-space-space-int32-flags-int32-bytes-per-row-1-screen-id-screen-b-main-screen-id">ServerBitmap *CreateBitmap(BRect bounds, color_space space, int32 flags, int32 bytes_per_row=-1, screen_id screen=B_MAIN_SCREEN_ID)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BitmapManager.html#void-deletebitmap-serverbitmap-bitmap">void DeleteBitmap(ServerBitmap *bitmap)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ColorUtils.html">ColorUtils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ColorUtils.html#global-functions">Global Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ColorUtils.html#void-setrgbcolor32-rgb-color-col-uint8-r-uint8-g-uint8-b-uint8-a-255">void SetRGBColor32(rgb_color *col, uint8 r, uint8 g, uint8 b, uint8 a=255)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ColorUtils.html#void-setrgbacolor32-rgb-color-col-uint16-color16">void SetRGBAColor32(rgb_color *col, uint16 color16)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ColorUtils.html#void-setrgbcolor16-uint16-col-uint8-r-uint8-g-uint8-b">void SetRGBColor16(uint16 *col, uint8 r, uint8 g, uint8 b)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ColorUtils.html#void-setrgbacolor15-uint16-col-uint8-r-uint8-g-uint8-b-bool-opaque-true">void SetRGBAColor15(uint16 *col, uint8 r, uint8 g, uint8 b, bool opaque=true)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ColorUtils.html#uint8-findclosestcolor-rgb-color-palette-rgb-color-col">uint8 FindClosestColor(rgb_color *palette,rgb_color col)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ColorUtils.html#uint16-findclosestcolor16-rgb-color-col">uint16 FindClosestColor16(rgb_color col)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ColorUtils.html#uint16-findclosestcolor15-rgb-color-col">uint16 FindClosestColor15(rgb_color col)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ColorUtils.html#rgb-color-makeblendcolor-rgb-color-col-rgb-color-col2-float-position">rgb_color MakeBlendColor(rgb_color col, rgb_color col2, float position)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="CursorManager.html">CursorManager class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CursorManager.html#enumerated-types">Enumerated Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#cursor-which">cursor_which</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CursorManager.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#cursormanager-void">CursorManager(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#id1">~CursorManager(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#int32-addcursor-servercursor-sc">int32 AddCursor(ServerCursor *sc)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#void-deletecursor-int32-ctoken">void DeleteCursor(int32 ctoken)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#void-removeappcursors-serverapp-app">void RemoveAppCursors(ServerApp *app)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#void-showcursor-void-void-hidecursor-void-void-obscurecursor-void">void ShowCursor(void), void HideCursor(void), void ObscureCursor(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#void-setcursor-int32-token-void-setcursor-cursor-which-cursor">void SetCursor(int32 token), void SetCursor(cursor_which cursor)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#servercursor-getcursor-cursor-which-which">ServerCursor *GetCursor(cursor_which which)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#void-changecursor-cursor-which-which-int32-token">void ChangeCursor(cursor_which which, int32 token)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CursorManager.html#cursor-which-getcursorwhich-void">cursor_which GetCursorWhich(void)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Decorator.html">Decorator class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Decorator.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#decorator-brect-int32-wlook-int32-wfeel-int32-wflags">Decorator(BRect int32 wlook, int32 wfeel, int32 wflags)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#decorator-void">~Decorator(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setcolors-color-set-colors">void SetColors(color_set colors)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setdriver-displaydriver-driver">void SetDriver(DisplayDriver *driver)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setclose-bool-is-down">void SetClose(bool is_down)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setminimize-bool-is-down">void SetMinimize(bool is_down)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setzoom-bool-is-down">void SetZoom(bool is_down)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setflags-int32-wflags">void SetFlags(int32 wflags)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setfeel-int32-wfeel">void SetFeel(int32 wfeel)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setlook-int32-wlook">void SetLook(int32 wlook)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#bool-getclose-void">bool GetClose(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#bool-getminimize-void">bool GetMinimize(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#bool-getzoom-void">bool GetZoom(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#int32-getlook-void">int32 GetLook(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#int32-getfeel-void">int32 GetFeel(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#int32-getflags-void">int32 GetFlags(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-settitle-const-char-string">void SetTitle(const char *string)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setfont-sfont-sf">void SetFont(SFont *sf)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#int32-cliptitle-float-width">int32 _ClipTitle(float width)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setfocus-bool-is-active">void SetFocus(bool is_active)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#bool-getfocus-void">bool GetFocus(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#int32-titlewidth-void">int32 _TitleWidth(void)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Decorator.html#virtual-functions">Virtual Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-moveby-float-x-float-y">void MoveBy(float x, float y)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-moveby-bpoint-pt">void MoveBy(BPoint pt)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-resizeby-float-x-float-y">void ResizeBy(float x, float y)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-resizeby-bpoint-pt">void ResizeBy(BPoint pt)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-draw-brect-r">void Draw(BRect r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-draw-void">void Draw(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-drawclose-void">void DrawClose(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#protected-void-drawclose-brect-r">protected: void _DrawClose(BRect r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-drawminimize-void">void DrawMinimize(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#protected-void-drawminimize-brect-r">protected: void _DrawMinimize(BRect r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-drawzoom-void">void DrawZoom(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#protected-void-drawzoom-brect-r">protected: void _DrawZoom(BRect r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-drawframe-void">void DrawFrame(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#protected-void-drawframe-brect-r">protected: void _DrawFrame(BRect r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-drawtab-void">void DrawTab(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#protected-void-drawtab-brect-r">protected: void _DrawTab(BRect r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-drawtitle-void">void DrawTitle(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#protected-void-drawtitle-brect-r">protected: void _DrawTitle(BRect r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#void-setfocus-void">void _SetFocus(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#sregion-getfootprint-void">SRegion GetFootprint(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#click-type-clicked-bpoint-pt-int32-buttons-int32-modifiers">click_type Clicked(BPoint pt, int32 buttons, int32 modifiers)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#brect-slidetab-float-dx-dy-0">BRect SlideTab(float dx, dy=0)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Decorator.html#exported-c-functions">Exported C Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#extern-c-decorator-create-decorator-brect-frame-int32-wlook-int32-wfeel-int32-wflags">extern “C” Decorator *create_decorator(BRect frame, int32 wlook, int32 wfeel, int32 wflags)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#extern-c-float-get-decorator-version-void">extern “C” float get_decorator_version(void)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Decorator.html#enumerated-types">Enumerated Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Decorator.html#click-type">click_type</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Desktop.html">Desktop module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Desktop.html#global-functions">Global Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-initdesktop-void">void InitDesktop(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-shutdowndesktop-void">void ShutdownDesktop(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-addworkspace-int32-index-1">void AddWorkspace(int32 index=-1)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-deleteworkspace-int32-index">void DeleteWorkspace(int32 index)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#int32-countworkspaces-void">int32 CountWorkspaces(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-setworkspacecount-int32-count">void SetWorkspaceCount(int32 count)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#int32-currentworkspace-screen-id-screen-b-main-screen-id">int32 CurrentWorkspace(screen_id screen=B_MAIN_SCREEN_ID)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-setworkspace-int32-workspace-screen-id-screen-b-main-screen-id">void SetWorkspace(int32 workspace, screen_id screen=B_MAIN_SCREEN_ID)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-setscreen-screen-id-id">void SetScreen(screen_id id)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#int32-countscreens-void">int32 CountScreens(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#screen-id-activescreen-void">screen_id ActiveScreen(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#displaydriver-getgfxdriver-screen-id-screen-b-main-screen-id">DisplayDriver *GetGfxDriver(screen_id screen=B_MAIN_SCREEN_ID)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#status-t-setspace-int32-index-int32-res-bool-stick-true-screen-id-screen-b-main-screen-id">status_t SetSpace(int32 index, int32 res, bool stick=true, screen_id screen=B_MAIN_SCREEN_ID)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-addwindowtodesktop-serverwindow-win-int32-workspace-b-current-workspace-screen-id-screen-b-main-screen-id">void AddWindowToDesktop(ServerWindow *win, int32 workspace=B_CURRENT_WORKSPACE, screen_id screen=B_MAIN_SCREEN_ID)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-removewindowfromdesktop-serverwindow-win">void RemoveWindowFromDesktop(ServerWindow *win)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#serverwindow-getactivewindow-void">ServerWindow *GetActiveWindow(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-setactivewindow-serverwindow-win">void SetActiveWindow(ServerWindow *win)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#layer-getrootlayer-int32-workspace-b-current-workspace-screen-id-screen-b-main-screen-id">Layer *GetRootLayer(int32 workspace=B_CURRENT_WORKSPACE, screen_id screen=B_MAIN_SCREEN_ID)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-set-drag-message-int32-size-int8-flattened">void set_drag_message(int32 size, int8 *flattened)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#int8-get-drag-message-int32-size">int8* get_drag_message(int32 *size)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#void-empty-drag-message-void">void empty_drag_ message(void)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Desktop.html#namespaces">Namespaces</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Desktop.html#desktop-private">desktop_private</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DesktopClasses.html">Screen class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="DesktopClasses.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#screen-displaydriver-gfxmodule-uint8-workspaces">Screen(DisplayDriver *gfxmodule, uint8 workspaces)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#screen-void">~Screen(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-addworkspace-int32-index-1">void AddWorkspace(int32 index=-1)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-deleteworkspace-int32-index">void DeleteWorkspace(int32 index)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#int32-countworkspaces-void">int32 CountWorkspaces(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-setworkspacecount-int32-count">void SetWorkspaceCount(int32 count)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#int32-currentworkspace-void">int32 CurrentWorkspace(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-setworkspace-int32-workspace">void SetWorkspace(int32 workspace)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-activate-bool-active-true">void Activate(bool active=true)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#displaydriver-getdriver-void">DisplayDriver *GetDriver(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#status-t-setspace-int32-index-int32-res-bool-stick-true">status_t SetSpace(int32 index, int32 res, bool stick=true)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-addwindow-serverwindow-win-int32-workspace-b-current-workspace">void AddWindow(ServerWindow *win, int32 workspace=B_CURRENT_WORKSPACE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-removewindow-serverwindow-win">void RemoveWindow(ServerWindow *win)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#serverwindow-activewindow-void">ServerWindow *ActiveWindow(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-setactivewindow-serverwindow-win">void SetActiveWindow(ServerWindow *win)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#layer-getrootlayer-int32-workspace-b-current-workspace">Layer *GetRootLayer(int32 workspace=B_CURRENT_WORKSPACE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#bool-isinitialized-void">bool IsInitialized(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#workspace-getactiveworkspace-void">Workspace *GetActiveWorkspace(void)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="DesktopClasses.html#workspace-class-members">Workspace class members</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#workspace-void">Workspace(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#id1">~Workspace(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-setbgcolor-const-rgbcolor-c">void SetBGColor(const RGBColor &amp;c)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#rgbcolor-bgcolor-void">RGBColor BGColor(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#rootlayer-getroot-void">RootLayer *GetRoot(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-setdata-graphics-card-info-gcinfo-frame-buffer-info-fbinfo">void SetData(graphics_card_info *gcinfo, frame_buffer_info *fbinfo)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-getdata-graphics-card-info-gcinfo-frame-buffer-info-fbinfo">void GetData(graphics_card_info *gcinfo, frame_buffer_info *fbinfo)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="DesktopClasses.html#rootlayer-class-members">RootLayer class members</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#rootlayer-void">~RootLayer(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-requestdraw-const-brect-r">void RequestDraw(const BRect &amp;r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-moveby-bpoint-pt-void-moveby-float-x-float-y">void MoveBy(BPoint pt), void MoveBy(float x, float y)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-setdriver-displaydriver-d">void SetDriver(DisplayDriver *d)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DesktopClasses.html#void-rebuildregions-bool-recursive-false">void RebuildRegions(bool recursive=false)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DisplayDriver.html">DisplayDriver class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="DisplayDriver.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#displaydriver-void">DisplayDriver(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#id1">~DisplayDriver(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#bool-initialize-void">bool Initialize(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-shutdown-void">void Shutdown(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-copybits-brect-src-brect-dest">void CopyBits(BRect src, BRect dest)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-invertrect-brect-r">void InvertRect(BRect r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-drawbitmap-serverbitmap-bmp-brect-src-brect-dest-render-mode-mode">void DrawBitmap(ServerBitmap *bmp, BRect src, BRect dest, render_mode mode)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-drawpicture-spicture-pic-bpoint-pt">void DrawPicture(SPicture *pic, BPoint pt)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-drawchar-char-c-bpoint-pt">void DrawChar(char c, BPoint pt)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-drawstring-const-char-string-int32-length-bpoint-pt-escapement-delta-delta-null">void DrawString(const char *string, int32 length, BPoint pt, escapement_delta *delta=NULL)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-strokearc-brect-r-float-angle-float-span-layerdata-d-int8-pattern">void StrokeArc(BRect r, float angle, float span, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-fillarc-brect-r-float-angle-float-span-layerdata-d-int8-pattern">void FillArc(BRect r, float angle, float span, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-strokebezier-bpoint-pts-layerdata-d-int8-pat">void StrokeBezier(BPoint *pts, layerdata *d, int8 *pat)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-fillbezier-bpoint-pts-layerdata-d-int8-pat">void FillBezier(BPoint *pts, layerdata *d, int8 *pat)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-strokeellipse-brect-r-layerdata-d-int8-pattern">void StrokeEllipse(BRect r, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-fillellipse-brect-r-layerdata-d-int8-pattern">void FillEllipse(BRect r, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-strokeline-bpoint-start-bpoint-end-layerdata-d-int8-pattern">void StrokeLine(BPoint start, BPoint end, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-strokelinearray-bpoint-pts-int32-numlines-rgb-color-colors-layerdata-d">void StrokeLineArray(BPoint *pts, int32 numlines, rgb_color *colors, layerdata *d)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-strokepolygon-bpoint-ptlist-int32-numpts-brect-rect-layerdata-d-int8-pattern-bool-is-closed-true">void StrokePolygon(BPoint *ptlist, int32 numpts, BRect rect, layerdata *d, int8 *pattern, bool is_closed=true)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-fillpolygon-bpoint-ptlist-int32-numpts-brect-rect-layerdata-d-int8-pattern">void FillPolygon(BPoint *ptlist, int32 numpts, BRect rect, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-strokerect-brect-r-layerdata-d-int8-pattern">void StrokeRect(BRect r, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-fillrect-brect-r-layerdata-d-int8-pattern">void FillRect(BRect r, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-strokeroundrect-brect-r-float-xrad-float-yrad-layerdata-d-int8-pattern">void StrokeRoundRect(BRect r, float xrad, float yrad, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-fillroundrect-brect-r-float-xrad-float-yrad-layerdata-d-int8-pattern">void FillRoundRect(BRect r, float xrad, float yrad, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-strokeshape-sshape-sh-layerdata-d-int8-pattern">void StrokeShape(SShape *sh, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-fillshape-sshape-sh-layerdata-d-int8-pattern">void FillShape(SShape *sh, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-stroketriangle-bpoints-pts-brect-r-layerdata-d-int8-pattern">void StrokeTriangle(BPoints *pts, BRect r, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-filltriangle-bpoints-pts-brect-r-layerdata-d-int8-pattern">void FillTriangle(BPoints *pts, BRect r, layerdata *d, int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-showcursor-void">void ShowCursor(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-hidecursor-void">void HideCursor(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-obscurecursor-void">void ObscureCursor(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#bool-iscursorhidden-void">bool IsCursorHidden(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-setcursor-servercursor-csr">void SetCursor(ServerCursor *csr)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#float-stringwidth-const-char-string-int32-length-layerdata-d">float StringWidth(const char *string, int32 length, LayerData *d)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#float-stringheight-const-char-string-int32-length-layerdata-d">float StringHeight(const char *string, int32 length, LayerData *d)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="DisplayDriver.html#protected-functions">Protected Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#uint8-getdepth-void">uint8 GetDepth(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#uint16-getheight-void">uint16 GetHeight(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#uint16-getwidth-void">uint16 GetWidth(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#screen-mode-getmode-void">screen_mode GetMode(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-setmode-screen-mode-mode">void SetMode(screen_mode mode)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#bool-dumptofile-const-char-path">bool DumpToFile(const char *path)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-lock-void">void Lock(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-unlock-void">void Unlock(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-setdepthinternal-uint8-d">void SetDepthInternal(uint8 d)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-setheightinternal-uint16-h">void SetHeightInternal(uint16 h)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-setwidthinternal-uint16-w">void SetWidthInternal(uint16 w)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-setmodeinternal-int32-m">void SetModeInternal(int32 m)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-setcursorhidden-bool-state">void SetCursorHidden(bool state)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#void-setcursorobscured-bool-state">void SetCursorObscured(bool state)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DisplayDriver.html#bool-iscursorobscured-void">bool IsCursorObscured(void)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Layer.html">Layer class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Layer.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#layer-brect-frame-const-char-name-int32-resize-int32-flags-serverwindow-win">Layer(BRect frame, const char *name, int32 resize, int32 flags, ServerWindow *win)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#layer-void">~Layer(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-addchild-layer-child-layer-before-null-bool-rebuild-true">void AddChild(Layer *child, Layer *before=NULL, bool rebuild=true)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#removechild-layer-child-bool-rebuild-true">RemoveChild(Layer *child, bool rebuild=true)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-removeself-bool-rebuild-true">void RemoveSelf(bool rebuild=true)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-invalidate-brect-r">void Invalidate(BRect r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-invalidate-bregion-region">void Invalidate(BRegion *region)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#brect-frame-void-brect-bounds-void">BRect Frame(void), BRect Bounds(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-moveby-bpoint-pt-void-moveby-float-x-float-y">void MoveBy(BPoint pt), void MoveBy(float x, float y)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-resizeby-bpoint-pt-void-resizeby-float-x-float-y">void ResizeBy(BPoint pt), void ResizeBy(float x, float y)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#int32-countchildren-void">int32 CountChildren(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#bool-isdirty-void">bool IsDirty(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#brect-converttotop-const-brect-r-bregion-converttotop-const-bregion-r">BRect ConvertToTop(const BRect &amp;r), BRegion ConvertToTop(const BRegion &amp;r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#brect-convertfromtop-const-brect-r-bregion-convertfromtop-const-bregion-r">BRect ConvertFromTop(const BRect &amp;r), BRegion ConvertFromTop(const BRegion &amp;r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#brect-convertfromparent-const-brect-r-bregion-convertfromparent-const-bregion-r">BRect ConvertFromParent(const BRect &amp;r), BRegion ConvertFromParent(const BRegion &amp;r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-rebuildregions-bool-recursive-false">void RebuildRegions(bool recursive=false)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-maketopchild-void">void MakeTopChild(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-makebottomchild-void">void MakeBottomChild(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#void-requestdraw-const-brect-r">void RequestDraw(const BRect &amp;r)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#layer-findlayer-int32-token">Layer *FindLayer(int32 token)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#layer-getchildat-bpoint-pt-bool-recursive-false">Layer *GetChildAt(BPoint pt, bool recursive=false)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Layer.html#portlink-getlink-void">PortLink *GetLink(void)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="PatternHandler.html">PatternHandler class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="PatternHandler.html#enumerated-types">Enumerated Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="PatternHandler.html#pattern-enum">pattern_enum</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="PatternHandler.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="PatternHandler.html#patternhandler">PatternHandler()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PatternHandler.html#id1">~PatternHandler()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PatternHandler.html#void-settarget-int8-pattern">void SetTarget(int8 *pattern)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PatternHandler.html#void-setcolors-rgbcolor-c1-rgbcolor-c2">void SetColors(RGBColor c1, RGBColor c2)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PatternHandler.html#rgbcolor-getcolor-bpoint-pt-rgbcolor-getcolor-float-x-float-y">RGBColor GetColor(BPoint pt) RGBColor GetColor (float x, float y)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PatternHandler.html#bool-getvalue-bpoint-pt-bool-getvalue-float-x-float-y">bool GetValue(BPoint pt) bool GetValue (float x, float y)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="RGBColor.html">RGBColor class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="RGBColor.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#rgbcolor-uint8-r-uint8-g-uint8-b-uint8-a-255">RGBColor(uint8 r, uint8 g, uint8 b, uint8 a=255)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#rgbcolor-rgb-color-col">RGBColor(rgb_color col)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#rgbcolor-uint16-color16">RGBColor(uint16 color16)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#rgbcolor-uint8-color8">RGBColor(uint8 color8)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#rgbcolor-const-rgbcolor-color">RGBColor(const RGBColor &amp;color)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#rgbcolor-void">RGBColor(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#void-printtostream-void">void PrintToStream(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#uint8-getcolor8-void">uint8 GetColor8(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#uint16-getcolor16-void">uint16 GetColor16(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#rgb-color-getcolor32-void">rgb_color GetColor32(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#void-setcolor-const-rgbcolor-color">void SetColor(const RGBColor &amp;color)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#void-setcolor-uint8-r-uint8-g-uint8-b-uint8-a-255">void SetColor(uint8 r, uint8 g, uint8 b, uint8 a=255)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#void-setcolor-rgb-color-col">void SetColor(rgb_color col)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#void-setcolor-uint16-color16">void SetColor(uint16 color16)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#void-setcolor-uint8-color8">void SetColor(uint8 color8)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#rgbcolor-operator-const-rgbcolor-from">RGBColor &amp; operator=(const RGBColor &amp;from)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#bool-operator-const-rgbcolor-from">bool operator==(const RGBColor &amp;from)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#id1">bool operator!=(const RGBColor &amp;from)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RGBColor.html#rgbcolor-makeblendcolor-rgbcolor-c-float-position">RGBColor MakeBlendColor(RGBColor c, float position)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ServerBitmap.html">ServerBitmap class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ServerBitmap.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ServerBitmap.html#serverbitmap-brect-r-color-space-cspace-int32-flags-int32-bytesperrow-1-screen-id-screen-b-main-screen-id">ServerBitmap(BRect r, color_space cspace, int32 flags, int32 bytesperrow=-1, screen_id screen=B_MAIN_SCREEN_ID)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerBitmap.html#serverbitmap-void">~ServerBitmap(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerBitmap.html#uint8-bits-void">uint8 *Bits(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerBitmap.html#area-id-area-void">area_id Area(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerBitmap.html#uint32-bitslength-void">uint32 BitsLength(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerBitmap.html#brect-bounds-void">BRect Bounds(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerBitmap.html#int32-bytesperrow-void">int32 BytesPerRow(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ServerBitmap.html#void-handlespace-color-space-cs-int32-bytesperline-1">void _HandleSpace(color_space cs, int32 bytesperline=-1)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="SystemPalette.html">SystemPalette class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="SystemPalette.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#systempalette-void">SystemPalette(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#id1">~SystemPalette(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#void-setpalette-uint8-index-rgbcolor-col-void-setpalette-uint8-index-rgb-color-col">void SetPalette(uint8 index, RGBColor col), void SetPalette(uint8 index, rgb_color col)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#rgbcolor-getpalette-uint8-index">RGBColor GetPalette(uint8 index)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#void-setguicolor-color-which-which-rgbcolor-col">void SetGUIColor(color_which which, RGBColor col)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#rgbcolor-getguicolor-color-which-which">RGBColor GetGUIColor(color_which which)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#color-set-getguicolors-void">color_set GetGUIColors(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#void-setguicolors-color-set-cset">void SetGUIColors(color_set cset)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#protected-void-generatesystempalette-rgb-color-palette">protected: void _GenerateSystemPalette(rgb_color *palette)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="SystemPalette.html#grays">Grays:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="SystemPalette.html#blues">Blues:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="SystemPalette.html#reds">Reds:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="SystemPalette.html#greens">Greens:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="SystemPalette.html#protected-void-setdefaultguicolors-void">protected: void _SetDefaultGUIColors(void)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="SystemPalette.html#structures">Structures</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="WinBorder.html">WinBorder class : public Layer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="WinBorder.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#winborder-brect-r-const-char-name-int32-resize-int32-flags-serverwindow-win">WinBorder(BRect r, const char *name, int32 resize, int32 flags, ServerWindow *win)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#winborder-void">~WinBorder(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-requestdraw-void">void RequestDraw(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-moveby-bpoint-pt-void-moveby-float-x-float-y">void MoveBy(BPoint pt), void MoveBy(float x, float y)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-resizeby-bpoint-pt-void-resizeby-float-x-float-y">void ResizeBy(BPoint pt), void ResizeBy(float x, float y)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-mousedown-int8-buffer">void MouseDown(int8 *buffer)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-mouseup-int8-buffer">void MouseUp(int8 *buffer)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-mousemoved-int8-buffer">void MouseMoved(int8 *buffer)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-updatedecorator-void">void UpdateDecorator(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-updatecolors-void">void UpdateColors(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-updatefont-void">void UpdateFont(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-updatescreen-void">void UpdateScreen(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-rebuildregions-bool-recursive-true">void RebuildRegions(bool recursive=true)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-activate-bool-state">void Activate(bool state)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="WinBorder.html#global-functions">Global Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#bool-is-moving-window-void-void-set-is-moving-window-bool-state">bool is_moving_window(void), void set_is_moving_window(bool state)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#bool-is-resizing-window-void-void-set-is-resizing-window-bool-state">bool is_resizing_window(void), void set_is_resizing_window(bool state)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WinBorder.html#void-set-active-winborder-winborder-win-winborder-get-active-winborder-void">void set_active_winborder(WinBorder *win), WinBorder * get_active_winborder(void)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="WinBorder.html#namespaces">Namespaces</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>Font Infrastructure</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FontServer.html">FontServer class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="FontServer.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#fontserver-void">FontServer(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#id1">~FontServer(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#void-lock-void-void-unlock-void">void Lock(void), void Unlock(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#void-savelist-void">void SaveList(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#status-t-scandirectory-const-char-path">status_t ScanDirectory(const char *path)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#fontstyle-getfont-font-family-family-font-style-face">FontStyle *GetFont(font_family family, font_style face)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#fontinstance-getinstance-font-family-family-font-style-face-int16-size-int16-rotation-int16-shear">FontInstance *GetInstance(font_family family, font_style face, int16 size, int16 rotation, int16 shear)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#int32-countfamilies-void">int32 CountFamilies(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#status-t-isinitialized-void">status_t IsInitialized(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#int32-countstyles-font-family-family">int32 CountStyles(font_family family)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#fontstyle-getstyle-font-family-family-font-style-style">FontStyle *GetStyle(font_family family, font_style style)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#void-removefamily-const-char-family">void RemoveFamily(const char *family)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#fontfamily-findfamily-const-char-name">FontFamily *_FindFamily(const char *name)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#serverfont-getsystemplain-void-serverfont-getsystembold-void-serverfont-getsystemfixed-void">ServerFont *GetSystemPlain(void), ServerFont *GetSystemBold(void), ServerFont *GetSystemFixed(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#bool-setsystemplain-const-char-family-const-char-style-float-size">bool SetSystemPlain(const char *family, const char *style, float size)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#bool-setsystembold-const-char-family-const-char-style-float-size">bool SetSystemBold(const char *family, const char *style, float size)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#bool-setsystemfixed-const-char-family-const-char-style-float-size">bool SetSystemFixed(const char *family, const char *style, float size)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#void-removeunusedfamilies-void">void RemoveUnusedFamilies(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontServer.html#bool-fontsneedupdated-void">bool FontsNeedUpdated(void)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="FontFamily.html">FontFamily class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="FontFamily.html#member-functions">Member Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="FontFamily.html#fontfamily-const-char-name">FontFamily(const char *name)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontFamily.html#fontfamily-void">~FontFamily(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontFamily.html#const-char-getname-void">const char *GetName(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontFamily.html#void-addstyle-const-char-path-ft-face-face">void AddStyle(const char *path, FT_Face face)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontFamily.html#void-removestyle-const-char-style">void RemoveStyle(const char *style)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontFamily.html#fontstyle-getstyle-const-char-style">FontStyle *GetStyle(const char *style)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontFamily.html#const-char-getstyle-int32-index">const char *GetStyle(int32 index)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontFamily.html#int32-countstyles-void">int32 CountStyles(void)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FontFamily.html#bool-hasstyle-const-char-stylename">bool HasStyle(const char *stylename)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="other-documents">
+<h2>Other Documents<a class="headerlink" href="#other-documents" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="asis.html">App Server Interface Specification v0.3</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="asis.html#purpose">Purpose:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="asis.html#tasks">Tasks:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="asis.html#graphics">Graphics:</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#desktop-initialization">Desktop Initialization</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#load-accelerant">Load Accelerant</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#set-up-workspaces">Set up workspaces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#display">Display</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#window-management">Window management</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#serverapps">ServerApps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#serverwindows">ServerWindows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#layers">Layers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#windowborders">WindowBorders</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#decorators">Decorators</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#how-it-all-works">How It All Works</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#screen-updates">Screen Updates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#cursor-management">Cursor Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#display-drivers">Display Drivers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="asis.html#process-management">Process Management</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#bapplication-execution">BApplication execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#non-bapplication-execution">non-BApplication execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#killing-exiting-applications">Killing/Exiting Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#system-shutdown">System Shutdown</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="asis.html#input-processing">Input Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#input-server-messages">Input Server messages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#mouse">Mouse</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#b-mouse-down">B_MOUSE_DOWN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#b-mouse-up">B_MOUSE_UP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#b-mouse-moved">B_MOUSE_MOVED</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#b-mouse-wheel-changed">B_MOUSE_WHEEL_CHANGED</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#keyboard">Keyboard</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#b-key-down">B_KEY_DOWN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#b-key-up">B_KEY_UP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#b-unmapped-key-down">B_UNMAPPED_KEY_DOWN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#b-unmapped-key-up">B_UNMAPPED_KEY_UP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asis.html#b-modifiers-changed">B_MODIFIERS_CHANGED</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="asis.html#messaging">Messaging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#inter-application-messaging">Inter-Application Messaging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#drag-and-drop">Drag-and-drop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asis.html#methods">Methods</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<ul class="simple">
+<li><a class="reference external" href="MultiMonitor.htm">Multiple Monitor Support Spec</a></li>
+</ul>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="../../packages/OldIdeas.html">Package Management Ideas</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="AppServer.html">AppServer class</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, The Haiku development team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>
