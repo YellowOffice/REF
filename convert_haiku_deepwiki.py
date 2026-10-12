@@ -4,6 +4,9 @@ import re
 import json
 import urllib.request
 import urllib.parse
+import time
+import random
+
 from bs4 import BeautifulSoup
 import concurrent.futures
 import difflib
@@ -36,9 +39,11 @@ def get_html(url, force_network=False):
         with open(cache_path, "r", encoding="utf-8") as f:
             return f.read()
             
+    time.sleep(random.uniform(2.0, 5.0))
+
     # Fetch from web with browser-like user agent
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
     }
     req = urllib.request.Request(url, headers=headers)
     try:
